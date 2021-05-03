@@ -75,87 +75,6 @@ iptables -L -n --line-number
       </tags>
   </entry>
   <entry>
-    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
-    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
-<p>SMB远程代码执行漏洞</p>
-<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
-<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
-<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
-</blockquote>
-<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
-Windows 10 Version 1903 for x64-based Systems
-Windows 10 Version 1903 for ARM64-based Systems
-Windows Server, Version 1903 (Server Core installation)
-Windows 10 Version 1909 for 32-bit Systems
-Windows 10 Version 1909 for x64-based Systems
-Windows 10 Version 1909 for ARM64-based Systems
-Windows Server, Version 1909 (Server Core installation)
-</code></pre>
-<p><strong>漏洞复现工具下载</strong></p>
-<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
-<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
-<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
-<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>将目标机的防火墙关闭</strong></li>
-<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
-<ol start="3">
-<li><strong>利用下载的poc脚本发起攻击</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
-<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>生成一个反弹木马</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
-
-   说明: 
-   #-p payload
-   #-e 编码方式
-   #-i 编码次数
-   #-b 过滤坏字符
-   #LHOST,LPORT 监听上线的主机IP和端口
-   #-f python 生成python格式
-   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
-<ol start="2">
-<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
-<ol start="3">
-<li><strong>开启msf监听模块</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
-<ol start="4">
-<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
-<blockquote>
-<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>Windows 10</tag>
-        <tag>SMB</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>MySQL提权</title>
     <url>/2021/04/11/MySQL%E6%8F%90%E6%9D%83/</url>
     <content><![CDATA[<h1 id="MySQL提权"><a href="#MySQL提权" class="headerlink" title="MySQL提权"></a>MySQL提权</h1><blockquote>
@@ -331,6 +250,87 @@ exploit
       <tags>
         <tag>MySQL</tag>
         <tag>提权</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
+    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
+<p>SMB远程代码执行漏洞</p>
+<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
+<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
+<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
+</blockquote>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
+Windows 10 Version 1903 for x64-based Systems
+Windows 10 Version 1903 for ARM64-based Systems
+Windows Server, Version 1903 (Server Core installation)
+Windows 10 Version 1909 for 32-bit Systems
+Windows 10 Version 1909 for x64-based Systems
+Windows 10 Version 1909 for ARM64-based Systems
+Windows Server, Version 1909 (Server Core installation)
+</code></pre>
+<p><strong>漏洞复现工具下载</strong></p>
+<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
+<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
+<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
+<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>将目标机的防火墙关闭</strong></li>
+<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
+<ol start="3">
+<li><strong>利用下载的poc脚本发起攻击</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
+<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>生成一个反弹木马</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
+
+   说明: 
+   #-p payload
+   #-e 编码方式
+   #-i 编码次数
+   #-b 过滤坏字符
+   #LHOST,LPORT 监听上线的主机IP和端口
+   #-f python 生成python格式
+   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
+<ol start="2">
+<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
+<ol start="3">
+<li><strong>开启msf监听模块</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
+<ol start="4">
+<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
+<blockquote>
+<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>Windows 10</tag>
+        <tag>SMB</tag>
       </tags>
   </entry>
   <entry>
@@ -650,7 +650,7 @@ run
   <entry>
     <title>缓冲区溢出分析与利用(一)</title>
     <url>/2021/04/25/%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%E5%88%86%E6%9E%90%E4%B8%8E%E5%88%A9%E7%94%A8(%E4%B8%80)/</url>
-    <content><![CDATA[<h1 id="PCMan’s-FTP-Server缓冲区溢出分析与利用"><a href="#PCMan’s-FTP-Server缓冲区溢出分析与利用" class="headerlink" title="PCMan’s FTP Server缓冲区溢出分析与利用"></a>PCMan’s FTP Server缓冲区溢出分析与利用</h1><p>知识大部分来源于学长<a href="https://shengnn.github.io/">Sheng(Sheng’s Blog)</a></p>
+    <content><![CDATA[<h1 id="PCMan’s-FTP-Server缓冲区溢出分析与利用"><a href="#PCMan’s-FTP-Server缓冲区溢出分析与利用" class="headerlink" title="PCMan’s FTP Server缓冲区溢出分析与利用"></a>PCMan’s FTP Server缓冲区溢出分析与利用</h1><p>知识大部分来源于学长<a href="https://taonn.github.io/">Tao’s Blog</a></p>
 <h3 id="简单原理"><a href="#简单原理" class="headerlink" title="简单原理"></a>简单原理</h3><blockquote>
 <p> 简单的来说，如果我们输入的数据长度超过了开发人员定义的缓冲区，那么这个数据就可以覆盖掉关键的寄存器，如EIP，EIP是指令寄存器，它存放当前指令的下一条指令的地址。如果它被来自用户输入的垃圾数据覆盖了，程序通常会崩溃，因为它跳转到的地址并尝试指向，但执行的并不是有效的指令。我们的目的就是要定制一个数据发送到程序覆盖EIP，使程序跳转到我们控制的位置，这样我们就可以执行shellcode了</p>
 </blockquote>
