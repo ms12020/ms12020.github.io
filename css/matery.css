@@ -715,8 +715,8 @@ header .go-back i {
 }
 
 .dream {
-    margin-top: 20px;
-    margin-bottom: 40px;
+    margin-top: 200px;
+    margin-bottom: 400px;
 }
 
 .dream .title,
@@ -1022,7 +1022,7 @@ article .article-tags .chip {
 
 /*文章详情样式*/
 #artDetail {
-    margin-top: -60px;
+    margin-top: -20px;
 }
 
 /* 修改小屏幕下文章详情table样式. */
@@ -1812,7 +1812,7 @@ thead {
 }
 
 .other-skills .sub-title {
-    font-size: 1.5rem;
+    font-size: 2rem;
 }
 
 .other-skills .tag-chips {
@@ -2157,4 +2157,26 @@ footer .copy-right {
     height: 50px;
     padding: 0;
     margin: 0;
+}
+
+# 把链接溢出隐藏
+.reprint__type{
+      display: inline-block;
+      width: 100%;
+      overflow: hidden;
+   }
+
+/* 滚动条 */
+::-webkit-scrollbar-thumb {
+    background-color: #FF2A68;
+    background-image: -webkit-linear-gradient(45deg,rgba(255,255,255,.4) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.4) 50%,rgba(255,255,255,.4) 75%,transparent 75%,transparent);
+    border-radius: 3em;
+}
+::-webkit-scrollbar-track {
+    background-color: #ffcacaff;
+    border-radius: 3em;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 15px;
 }

